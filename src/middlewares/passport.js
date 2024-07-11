@@ -1,7 +1,7 @@
 const passport = require('passport')    
 const strategyAuth2_0 = require('passport-oauth2-client-password')
 const customStrategy = require('passport-custom')
-const { error } = require('neo4j-driver')
+const { error, auth } = require('neo4j-driver')
 //const userService = require('../services/user')
 const oauth2Service = require('../services/ouath2')
 //autentifica que nuestro cliente sea el deseado
@@ -19,8 +19,8 @@ passport.use(new strategyAuth2_0(function(cliendID,clientSecret,done){
         done(error)
     }    
 }))
-
-passport.use('rtoken',new customStrategy(async function(){
+//refresh token
+passport.use('rtoken',new customStrategy(async function(request,DONE){
     try {
         if (request.body.grant_type === 'refresh_token' && request.body.refresh_token) {
           const data = await oauth2Service.getInfoFromValidToken(request.body.refresh_token)
@@ -42,6 +42,7 @@ passport.use('rtoken',new customStrategy(async function(){
         done(err)
       }
 }))
+
 
 /** 
   permite contextualizar a la app del usuario(persona en cuestion)
