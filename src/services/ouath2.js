@@ -51,7 +51,7 @@ exports.singUp = async (data)=> {
 exports.singIn = async(email,password) => {
     try{
         const query = `
-            SELECT s.id as id,s.name as name,s.church_id,s.password,r.name as rol_name FROM servants s
+            SELECT s.id as id,s.name as name, s.password  FROM servants s
             JOIN roles_administratives r ON r.id = s.rol_adm WHERE s.email = $1;
         `
         const result = await db.query(query,[email]);        
@@ -71,7 +71,9 @@ exports.singIn = async(email,password) => {
 
         return data;
     }catch(e){
-        console.log('error: ',e.message)
+        if(process.env.NODE_ENV === 'develop'){            
+            console.log('error: ',e.message)
+        }        
     }
 }
 
@@ -89,5 +91,52 @@ exports.createRefreshToken = async (data) => {
     
     return token;
 
+}
+
+exports.invitation_boarding = async(data)=>{
+    try{
+        const {email,status} = data
+        if(!email){
+            const error = new Error('Credenciales faltantes')
+            throw error
+        }
+        const query = `UPDATE invitations SET status = $1 WHERE email = $2 RETURNING *;`
+        const result = await db.query(query,[email])
+
+        if(result.rows.length === 0){
+            const error = new Error('No tienes credenciales')
+            throw error
+        }
+
+        return result.rows[0]
+
+    }catch(e){
+        return ('Ups algo fallo',e.message)
+    }
+}
+
+exports.createInvitationBoarding = async(email,inviterId,created,expires) => {
+    try{
+        const id = uuidv4()
+        const query = `
+        INSERT INTO invitations (id, inviter_id, email, created_at, expires_at)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING *;
+    `;
+
+    const result = await db.query(query, [id, inviterId, email, created, expires]);
+
+        if(result.rows.length === 0){
+            return new Error('Error al Insertar Dato')
+        }
+
+        const data = result.rows[0]
+        return data
+
+    }catch(e){
+        if(process.env.NODE_ENV === 'develop'){            
+            console.log('error: ',e.message)
+        }
+    }
 }
 
