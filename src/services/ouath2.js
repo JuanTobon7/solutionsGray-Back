@@ -2,6 +2,8 @@ const db = require('../databases/relationalDB')
 const { error } = require('neo4j-driver');
 const bcrypt = require('bcrypt')
 const { v4: uuidv4 } = require('uuid');
+const { duration } = require('moment');
+const { query } = require('express');
 
 exports.getInfoFromValidToken = async(rtoken)=>{
     if(!rtoken){
@@ -17,7 +19,7 @@ exports.getInfoFromValidToken = async(rtoken)=>{
 }
 
 exports.singUp = async (data)=> {    
-    
+    const rol = data.rol === 'Pastor' ? data.rol : null
     let id,result
     do{
         id = uuidv4()
@@ -25,8 +27,8 @@ exports.singUp = async (data)=> {
     }while(result.length>0)
 
         const query = `
-        INSERT INTO servants (id, cc, name, email, password, country_id, rol_adm, church_id, phone_number)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        INSERT INTO servants (id, cc, name, email, password, country_id, rol_adm,church_id, phone_number)
+        VALUES ($1, $2, $3, $4, $5, $6,(SELECT id FROM roles_administratives WHERE id = $7), $8,$9)
         RETURNING *;
       `;
       
@@ -37,7 +39,7 @@ exports.singUp = async (data)=> {
         data.email,
         data.password,
         data.countryId,
-        data.rolAdm,
+        data.rol,
         data.churchId,
         data.phoneNumber
       ]);
@@ -51,7 +53,7 @@ exports.singUp = async (data)=> {
 exports.singIn = async(email,password) => {
     try{
         const query = `
-            SELECT s.id as id,s.name as name, s.password  FROM servants s
+            SELECT s.id as id,s.name as name, s.password,r.name as rol_name  FROM servants s
             JOIN roles_administratives r ON r.id = s.rol_adm WHERE s.email = $1;
         `
         const result = await db.query(query,[email]);        
@@ -93,14 +95,14 @@ exports.createRefreshToken = async (data) => {
 
 }
 
-exports.invitation_boarding = async(data)=>{
+exports.getInvitationBoarding = async(data)=>{
     try{
-        const {email,status} = data
+        const {email} = data
         if(!email){
             const error = new Error('Credenciales faltantes')
             throw error
         }
-        const query = `UPDATE invitations SET status = $1 WHERE email = $2 RETURNING *;`
+        const query = `SELECT * FROM invitations WHERE email = $1;`
         const result = await db.query(query,[email])
 
         if(result.rows.length === 0){
@@ -140,3 +142,55 @@ exports.createInvitationBoarding = async(email,inviterId,created,expires) => {
     }
 }
 
+exports.verifyInvitation = async(email) => {
+    if(!email){
+        return new Error('Email no fue proporcionado')
+    }
+    const query = `SELECT * FROM invitations WHERE email = $1;`
+    const result = await db.query(query,[email])
+
+    if(result.rows.length === 0){
+        return new Error('No haz sido invitado')
+    }
+    const data = result.rows[0]
+    const payload = {
+        id: data.id,
+        email: data.email,
+        expires: data.expires_at
+    }
+
+    return payload
+}
+
+exports.getLeadsChurches = async(email) => {
+    if(!email){
+        return new Error('Email no fue proporcionado')
+    }
+    const query = `SELECT * FROM leads_pastor_churches WHERE email = $1;`
+    const result = await db.query(query,[email])
+
+    if(result.rows.length === 0){
+        return new Error('Ups no te encuentras en nuestra base de datos, por favor contactanos')
+    }
+    const data = result.rows[0]
+    const payload = {
+        id: data.id,
+        email: data.email
+    }
+    return payload
+}
+
+exports.invitation_boarding = async (email) => {
+    if(!email){
+        return new Error('Ups no se proporciono un email')
+    }
+
+    const query = `UPDATE invitations SET status = 'accept' WHERE email = $1`
+    const result = await db.query(query,[email])
+
+    if(result.rows.length === 0){
+        return new Error('Ups no habias sido invitado')
+    }
+
+    return 'Actualizado Exitosamente'
+}

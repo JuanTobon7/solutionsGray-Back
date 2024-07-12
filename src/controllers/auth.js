@@ -6,12 +6,20 @@ const sendEmail = require('../services/sendEmail/email')
 
 exports.singUp = async(req,res) => {
     try{
-        const {cc,name,email,password,countryId,rolAdm,churchId,phoneNumber} = req.body
-        if(!cc || !name || !email || !password || !countryId || !rolAdm || !churchId || !phoneNumber ){
+        const {cc,name,email,password,countryId,churchId,phoneNumber} = req.body
+        const rol = req.guest.rol_name
+        if(!cc || !name || !email || !password || !countryId || !churchId || !phoneNumber ){
             const error = new Error('Faltan Datos')
             res.status(400).send({message: error})
         }
-        const result = await ouath2Services.singUp({cc,name,email,password,countryId,rolAdm,churchId,phoneNumber})
+        const result = await ouath2Services.singUp({cc,name,email,password,countryId,churchId,phoneNumber,rol})
+        if(rol === 'User'){            
+            const acceptInvitation = await ouath2Services.invitation_boarding({email: req.invitation_token})
+            if(!acceptInvitation){
+                res.status(500).send('Ups hubo un error')
+            }
+        }
+
         if(!result){
             res.status(500).send({message: result})
         }
@@ -46,7 +54,6 @@ exports.sigIn = async(req,res)=>{
         }
         const token = jwt.encode(payload, process.env.JWT_SECRET,'HS256');
         const refreshToken = await ouath2Services.createRefreshToken({userId: payload.sub,created: payload.iat, expires:payload.exp});
-
         res.cookie('access_token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -76,7 +83,7 @@ exports.createInvitationBoarding = async (req,res) => {
           return res.status(400).send('No proporcionaste el email');
         }
         
-        const duration = 60 * 60 * 2 //2 horas
+        const duration = 60 * 60 * 24 * 27 //27 días
         const created = moment().format('X')
         const expires = moment().add(duration,'seconds').format('X')
         const inviterId = req.user.id
@@ -99,4 +106,42 @@ exports.createInvitationBoarding = async (req,res) => {
     }
 
 
+}
+
+exports.verifyInvitation = async(req,res) => {
+    try{        
+        const {email} = req.body
+        if(!email){
+            res.status(400).send('No fue proporcionado ningún email')
+            return
+        }
+
+        const result = await ouath2Services.verifyInvitation(email);
+        if(!result){
+            res.status(401).send('No Haz sido invitado')
+            return
+        }
+        const duration = 60 * 60 * 2 //2 horas
+        const expires = moment().add(duration,'seconds').format('X')        
+        if(result.expires < expires){
+            res.status(401).send({message: 'Ups tu invitación ha caducado comunicate con tu autoridad más cercana'})
+        }
+        const payload = {
+            sub: result.id,
+            iat: moment().format('X'),            
+            exp: expires,
+            ouathId: process.env.SSR_CLIENT_ID
+        }
+        invitation_token = jwt.encode(payload,process.env.JWT_SECRET,'HS256')
+        res.cookie('invitation-token',invitation_token,{
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: duration * 1000,
+          });
+        
+        res.status(200).send({message: 'Verificado Exitosamente'})
+
+    }catch(e){
+
+    }    
 }

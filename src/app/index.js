@@ -8,12 +8,14 @@ const passport = require('../middlewares/passport');
 const jwt = require('../middlewares/jwt')
 const router = require('../router/index')(passport);
 const app = express() //instancia de express
+const invitationToken = require('../middlewares/invitationToken')
 
 app.use(helmet()); //modifica cabeceras de seguridad evita XSS, clickjacking...
 app.use(cors()) //habilita peticiones externas
 app.use(xss()) //sanitiza las querys
 app.use(express.json());
 app.use(jwt)
+app.use(invitationToken)
 app.use(passport.initialize());
 app.use('/api',router);
 
