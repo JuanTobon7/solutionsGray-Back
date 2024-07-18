@@ -36,6 +36,24 @@ exports.sendInvitationOnBoarding = async (email, ministerio) => {
         return result
     } catch (error) {
         console.error('Error en sendInvitationOnBoarding:', error);
-        throw error;
     }
 };
+
+exports.sendLead = async(data) => {
+    try{
+        const {church_name,pastor_name,email,country_id,token} = data
+        const htmlToSend = compileTemplate('leadsChurch',{church_name,pastor_name,email,country_id,token})
+        const mailOptions = {
+            from: process.env.USER_EMAIL_INVITATION,
+            to: process.env.EMAIL_ATTEND,
+            html: htmlToSend
+        }
+        const result = await transporter.transporterGmail.sendMail(mailOptions)
+        if (!result) {
+            throw new Error('Algo falló al enviar la invitación');
+        }
+        return result
+    }catch(error) {
+        console.error('Error en sendLead:', error);
+    }
+}
