@@ -6,19 +6,26 @@ const sendEmail = require('../services/sendEmail/email')
 
 exports.singUp = async(req,res) => {
     try{
-        const {cc,name,email,password,countryId,churchId,phoneNumber} = req.body
-        const rol = req.guest.rol_name
-        if(!cc || !name || !email || !password || !countryId || !churchId || !phoneNumber ){
+        console.log('entramos a singUp ctrl')
+
+        const {cc,name,email,password,countryId,phoneNumber} = req.body
+        const churchId = req.newUser.church_id
+        console.log('this is churchId:',churchId)
+        const rol = req.newUser.rol_name
+        if(!cc || !name || !email || !password || !countryId || !phoneNumber ){
             const error = new Error('Faltan Datos')
             res.status(400).send({message: error})
+            return
         }
-        const result = await ouath2Services.singUp({cc,name,email,password,countryId,churchId,phoneNumber,rol})
-        if(rol === 'User'){            
-            const acceptInvitation = await ouath2Services.invitation_boarding({email: req.invitation_token})
-            if(!acceptInvitation){
-                res.status(500).send('Ups hubo un error')
-            }
+
+        if(req.newUser.rol_name !== 'Pastor' && !churchId){
+            console.log('tamos aqui')
+            const error = new Error('Faltan Datos')
+            res.status(400).send({message: error})
+            return
         }
+        console.log('here here here here go go go')
+        const result = await ouath2Services.singUp({cc,name,email,password,countryId,churchId,phoneNumber,rol})       
 
         if(!result){
             res.status(500).send({message: result})
@@ -40,14 +47,16 @@ exports.sigIn = async(req,res)=>{
         }        
 
         const result = await ouath2Services.singIn(email,password);
-        if(!result){
-            console.log('result invalido')
-            res.status(401).send({message: error})
+        if(result instanceof Error){
+            res.status(401).send({message: result.message})
+            return
         }
         const duration = 60 * 60 * 1 // 1 hora
         const payload = {
             sub: result.id,
             rol_name: result.rol_name,
+            church_id: result.church_id,
+            church_name: result.church_name,
             iat: moment().format('X'),
             exp: moment().add(duration,'seconds').format('X'),
             ouathId: process.env.SSR_CLIENT_ID
@@ -74,7 +83,7 @@ exports.sigIn = async(req,res)=>{
     }
 }
 
-exports.createInvitationBoarding = async (req,res) => {
+exports.    createInvitationBoarding = async (req,res) => {
     try{
         
         const {email} = req.body
@@ -90,8 +99,9 @@ exports.createInvitationBoarding = async (req,res) => {
 
         const result = await ouath2Services.createInvitationBoarding(email,inviterId,created,expires) 
 
-        if(!result){
-            res.status(401).send({message: result});
+        if(result instanceof Error){
+            res.status(401).send({message: result.message});
+            return
         }
 
         const churchName = req.user.church_name
@@ -99,7 +109,11 @@ exports.createInvitationBoarding = async (req,res) => {
         if(!invitation){
             res.status(400).sendd('Ups algo salio mal, intenta nuevamente');
         }
-        res.status(200).send({message: result})
+        const token ={
+            ...result,
+            church_id:req.user.church_id
+        }
+        res.status(200).send({message: token})
     }catch(err){
         console.error('Error en createInvitation: ', err);
         res.status(500).send({ message: 'Error interno del servidor', error: err.message });
@@ -108,36 +122,47 @@ exports.createInvitationBoarding = async (req,res) => {
 
 }
 
-exports.verifyInvitation = async(req,res) => {
+exports.acceptInvitation = async(req,res) => {
     try{        
-        const {email} = req.body
+        const invitate = req.newUser
+
+        if(!invitate){
+            res.status(400).send('No tienes credenciales para estar aqui')
+            return
+        }
+
+        if(invitate.status === 'accept'){
+            res.status(200).send('Ya habias sido verificado')
+            return
+        }
+
+        const result = await ouath2Services.acceptInvitation(invitate.email);
+        if(result instanceof Error){
+            res.status(401).send('No Haz sido invitado')
+            return
+        }       
+        
+        res.status(200).send({message: result})
+
+    }catch(e){
+        console.log(e)
+        res.status(400).send('Ups hubo un error',e)
+        return
+    }    
+}
+
+exports.verifyChurchLead = async(req,res) => {
+    try{        
+        const {email} = req.newUser
         if(!email){
             res.status(400).send('No fue proporcionado ningún email')
             return
         }
-
-        const result = await ouath2Services.verifyInvitation(email);
-        if(!result){
-            res.status(401).send('No Haz sido invitado')
+        const result = await ouath2Services.verifyChurchLead(email);
+        if(result instanceof Error){
+            res.status(401).send('No tienes ninguna peticion de afiliacion')
             return
-        }
-        const duration = 60 * 60 * 2 //2 horas
-        const expires = moment().add(duration,'seconds').format('X')        
-        if(result.expires < expires){
-            res.status(401).send({message: 'Ups tu invitación ha caducado comunicate con tu autoridad más cercana'})
-        }
-        const payload = {
-            sub: result.id,
-            iat: moment().format('X'),            
-            exp: expires,
-            ouathId: process.env.SSR_CLIENT_ID
-        }
-        invitation_token = jwt.encode(payload,process.env.JWT_SECRET,'HS256')
-        res.cookie('invitation-token',invitation_token,{
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            maxAge: duration * 1000,
-          });
+        }       
         
         res.status(200).send({message: 'Verificado Exitosamente'})
 

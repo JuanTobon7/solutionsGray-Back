@@ -5,6 +5,30 @@ const { v4: uuidv4 } = require('uuid');
 const { duration } = require('moment');
 const { query } = require('express');
 
+exports.verifyInvitationsLead = async(email)=>{
+    const query = `
+        SELECT 'in_invitations' AS source
+        FROM invitations
+        WHERE email = $1
+        UNION ALL
+        SELECT 'in_leads_pastor_churches' AS source
+        FROM leads_pastor_churches
+        WHERE email = $1;
+
+    `;
+    const result = await db.query(query,[email])    
+    console.log(result.rows)
+    if (result.rows.length === 0) {
+        return { in_invitations: false, in_leads_pastor_churches: false };
+    }
+
+    const sources = result.rows.map(row => row.source);
+    return {
+        in_invitations: sources.includes('in_invitations'),
+        in_leads_pastor_churches: sources.includes('in_leads_pastor_churches')
+    };
+}
+
 exports.getInfoFromValidToken = async(rtoken)=>{
     if(!rtoken){
         return new Error('token invalido')
@@ -18,8 +42,8 @@ exports.getInfoFromValidToken = async(rtoken)=>{
     return result
 }
 
-exports.singUp = async (data)=> {    
-    const rol = data.rol === 'Pastor' ? data.rol : null
+exports.singUp = async (data)=> {        
+    console.log('entramos a singUp service')
     let id,result
     do{
         id = uuidv4()
@@ -28,16 +52,17 @@ exports.singUp = async (data)=> {
 
         const query = `
         INSERT INTO servants (id, cc, name, email, password, country_id, rol_adm,church_id, phone_number)
-        VALUES ($1, $2, $3, $4, $5, $6,(SELECT id FROM roles_administratives WHERE id = $7), $8,$9)
+        VALUES ($1, $2, $3, $4, $5, $6,(SELECT id FROM roles_administratives WHERE name = $7), $8,$9)
         RETURNING *;
       `;
-      
+      const salt = await bcrypt.genSalt(12)
+      const hashedPassword = await bcrypt.hash(data.password,salt)
       result = await db.query(query, [
         id,
         data.cc,
         data.name,
         data.email,
-        data.password,
+        hashedPassword,
         data.countryId,
         data.rol,
         data.churchId,
@@ -53,8 +78,10 @@ exports.singUp = async (data)=> {
 exports.singIn = async(email,password) => {
     try{
         const query = `
-            SELECT s.id as id,s.name as name, s.password,r.name as rol_name  FROM servants s
-            JOIN roles_administratives r ON r.id = s.rol_adm WHERE s.email = $1;
+            SELECT s.id as id,s.name, s.password,r.name as rol_name,s.church_id,c.name as church_name  FROM servants s
+            JOIN roles_administratives r ON r.id = s.rol_adm 
+            LEFT JOIN churches c ON c.id = s.church_id
+            WHERE s.email = $1;
         `
         const result = await db.query(query,[email]);        
 
@@ -62,16 +89,16 @@ exports.singIn = async(email,password) => {
             const error = new Error('Ups email incorrecto')
             return error
         }
-        const data = result.rows[0]
+        const user = result.rows[0];  // Cambiar 'data' a 'user'
 
-        const hashedPassword = data.password;
+        const hashedPassword = user.password;
                 
-        if(await !bcrypt.compare(password,hashedPassword)){
+        if (await !bcrypt.compare(password, hashedPassword)) {
             const error = new Error('Ups contraseña incorrecta');
-            return error
+            return error;
         }
 
-        return data;
+        return user;  // Devolver el dato con el nuevo nombre
     }catch(e){
         if(process.env.NODE_ENV === 'develop'){            
             console.log('error: ',e.message)
@@ -95,35 +122,12 @@ exports.createRefreshToken = async (data) => {
 
 }
 
-exports.getInvitationBoarding = async(data)=>{
-    try{
-        const {email} = data
-        if(!email){
-            const error = new Error('Credenciales faltantes')
-            throw error
-        }
-        const query = `SELECT * FROM invitations WHERE email = $1;`
-        const result = await db.query(query,[email])
-
-        if(result.rows.length === 0){
-            const error = new Error('No tienes credenciales')
-            throw error
-        }
-
-        return result.rows[0]
-
-    }catch(e){
-        return ('Ups algo fallo',e.message)
-    }
-}
-
 exports.createInvitationBoarding = async(email,inviterId,created,expires) => {
     try{
         const id = uuidv4()
         const query = `
         INSERT INTO invitations (id, inviter_id, email, created_at, expires_at)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING *;
+        VALUES ($1, $2, $3, $4, $5) ON CONFLICT (email) DO NOTHING RETURNING *;
     `;
 
     const result = await db.query(query, [id, inviterId, email, created, expires]);
@@ -131,7 +135,6 @@ exports.createInvitationBoarding = async(email,inviterId,created,expires) => {
         if(result.rows.length === 0){
             return new Error('Error al Insertar Dato')
         }
-
         const data = result.rows[0]
         return data
 
@@ -142,55 +145,49 @@ exports.createInvitationBoarding = async(email,inviterId,created,expires) => {
     }
 }
 
-exports.verifyInvitation = async(email) => {
-    if(!email){
-        return new Error('Email no fue proporcionado')
-    }
-    const query = `SELECT * FROM invitations WHERE email = $1;`
-    const result = await db.query(query,[email])
-
+exports.getInvitationBoarding = async (email) => {
+    if (!email) {
+        return new Error('Email no fue proporcionado');
+    }   
+    console.log('here here')
+    const query = `
+        SELECT i.* ,s.church_id
+        FROM invitations i
+        JOIN servants s ON s.id = i.inviter_id 
+        WHERE i.email = $1;
+    `;
+    const result = await db.query(query, [email]);    
+    console.log('aqui tamos')
     if(result.rows.length === 0){
-        return new Error('No haz sido invitado')
+        return 'No estas afiliado'
     }
-    const data = result.rows[0]
-    const payload = {
-        id: data.id,
-        email: data.email,
-        expires: data.expires_at
-    }
+    const info = result.rows[0]
+    return {...info,rol_name:'User'};
+};
 
-    return payload
+
+
+exports.acceptInvitation = async(email) => {
+
+    const query = `UPDATE invitations SET status = 'accept' WHERE email = $1 RETURNING *;`
+    const result = await db.query(query,[email])
+    if(result.rows.length === 0){
+        return new Error('Ups no estabas en nuestra base de datos como invitado')        
+    }
+    return result.rows[0]
 }
 
-exports.getLeadsChurches = async(email) => {
+exports.verifyChurchLead = async(email) => {
     if(!email){
         return new Error('Email no fue proporcionado')
     }
+    console.log('email: ',email)
     const query = `SELECT * FROM leads_pastor_churches WHERE email = $1;`
     const result = await db.query(query,[email])
-
     if(result.rows.length === 0){
         return new Error('Ups no te encuentras en nuestra base de datos, por favor contactanos')
     }
-    const data = result.rows[0]
-    const payload = {
-        id: data.id,
-        email: data.email
-    }
-    return payload
+    const info = result.rows[0]
+    return {...info,rol_name: 'Pastor'}
 }
 
-exports.invitation_boarding = async (email) => {
-    if(!email){
-        return new Error('Ups no se proporciono un email')
-    }
-
-    const query = `UPDATE invitations SET status = 'accept' WHERE email = $1`
-    const result = await db.query(query,[email])
-
-    if(result.rows.length === 0){
-        return new Error('Ups no habias sido invitado')
-    }
-
-    return 'Actualizado Exitosamente'
-}

@@ -10,15 +10,17 @@ module.exports = async function (req,res,next){
     }
     if(token){
         try{
-            const payload = jwt.decode(token,process.env.JWT_SECRET)                        
+            const payload = jwt.decode(token,process.env.JWT_SECRET)
+            console.log(payload)                 
             req.token = token;
             const dataUser = await user.findById(payload.sub);
-            if(!dataUser){
-                res.status(400).send('token erroneo')
+            if(dataUser instanceof Error){
+                res.status(400).send({message: dataUser.message})
+                return
             }
-
+            console.log(dataUser)
             req.user = dataUser;
-            
+            console.log('here here here req.user',req.user)
         }catch(err){
             console.log(err);
             return res.status(400).send({message: err.message})

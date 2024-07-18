@@ -6,7 +6,15 @@
     <title>Document</title>
 </head>
 <body>
-    <h1>El ministerio {{ministerio}}</h1>
-    
+    <h1>El ministerio liderado por el pastor {{pastor_name}} quiere unirse a ti</h1>
+    <ul>
+        <li>Nombre de la Iglesia: {{church_name}}</li>
+        <li>Nombre del Pastor: {{pastor_name}}</li>
+        <li>Email: {{email}}</li>
+        <li>País: {{country_id}}</li>
+        <li>Token: {{token}}</li>
+    </ul>
+    <p><a href="http://localhost:3000/accept-invitation?token={{token}}">Aceptar Lead</a></p>
+    <p>Si no deseas aceptarlo simplemente ignora este lead</p>
 </body>
 </html>
