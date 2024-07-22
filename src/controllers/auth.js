@@ -55,8 +55,6 @@ exports.sigIn = async(req,res)=>{
         const payload = {
             sub: result.id,
             rol_name: result.rol_name,
-            church_id: result.church_id,
-            church_name: result.church_name,
             iat: moment().format('X'),
             exp: moment().add(duration,'seconds').format('X'),
             ouathId: process.env.SSR_CLIENT_ID
