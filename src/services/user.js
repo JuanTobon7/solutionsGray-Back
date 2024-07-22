@@ -7,6 +7,7 @@ exports.findById = async (id) => {
         s.name,
         r.name as rol_name,
         s.church_id,
+        s.country_id,
         c.name as church_name
         FROM servants s
         JOIN roles_administratives r ON r.id = s.rol_adm 
@@ -17,6 +18,6 @@ exports.findById = async (id) => {
     if(user.rows.length === 0){
         return new Error('ups hubo un error en la query')
     }
-    user.metadata = user.metadata ? JSON.parse(user.metadata) : {}    
+    
     return user.rows[0]
 }

@@ -6,7 +6,8 @@ module.exports= async function(req,res,next){
     if(req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer' && req.headers['x-email-token']){
         invitation_token = req.headers.authorization.split(' ')[1]        
     }else if (process.env.NODE_ENV === 'develop'){
-        console.log('no lo hallo: ',req.headers)
+        console.log('No tienes invitation token')
+
     }
     if(invitation_token){        
         try{

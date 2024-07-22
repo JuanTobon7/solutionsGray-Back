@@ -57,3 +57,25 @@ exports.sendLead = async(data) => {
         console.error('Error en sendLead:', error);
     }
 }
+
+exports.sendAssignedService = async(data) => {
+    try{
+        const {servant_name,rol_servant_name,church_name,date,event_name,servant_email} = data
+        if(!servant_name || !church_name || !date || !event_name || !rol_servant_name || !servant_email){
+            return new Error('Faltan Datos')
+        }
+        const htmlToSend = compileTemplate('assignedService',{servant_name,rol_servant_name,church_name,date,event_name,servant_email})
+        const mailOptions = {
+            from: process.env.USER_EMAIL_INVITATION,
+            to: servant_email,
+            html: htmlToSend
+        }
+        const result = await transporter.transporterGmail.sendMail(mailOptions)
+        if (!result) {
+            throw new Error('Algo falló al enviar la invitación');
+        }
+        return result
+    }catch(e){
+        return new Error('Ups algo fallo en el proceso de enviar correo')
+    }
+}

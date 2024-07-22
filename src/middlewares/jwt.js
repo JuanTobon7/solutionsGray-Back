@@ -6,19 +6,17 @@ module.exports = async function (req,res,next){
     if(req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer'  && req.headers['x-access-token']){
         token = req.headers.authorization.split(' ')[1]        
     }else if (process.env.NODE_ENV === 'develop'){
-        console.log('No tienes JWT',req.headers,'req auth: ',req.headers.authorization)
+        console.log('No tienes JWT')
     }
     if(token){
         try{
             const payload = jwt.decode(token,process.env.JWT_SECRET)
-            console.log(payload)                 
             req.token = token;
             const dataUser = await user.findById(payload.sub);
             if(dataUser instanceof Error){
                 res.status(400).send({message: dataUser.message})
                 return
             }
-            console.log(dataUser)
             req.user = dataUser;
             console.log('here here here req.user',req.user)
         }catch(err){
