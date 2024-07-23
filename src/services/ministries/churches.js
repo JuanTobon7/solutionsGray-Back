@@ -50,7 +50,7 @@ exports.createWorshipService = async(data) => {
         
     }while(result.rows.length > 0)
     query = `INSERT INTO events (id,name,date,church_id) VALUES ($1,$2,$3,$4) RETURNING *;`
-    result = await db.query(query,[id,data.name,data.date,data.churchId])
+    result = await db.query(query,[id,data.name,data.dateWhorship,data.churchId])
     if(result.rows.length === 0){
         return new Error('Ups algo fallo al guardar el culto')
     }
