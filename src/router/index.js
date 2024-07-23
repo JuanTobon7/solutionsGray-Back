@@ -22,8 +22,13 @@ module.exports = function(passport){
     router.post('/create-worship-service',superAdmin,churchController.createWorshipService) //ok
     router.post('/create-rol-servant',superAdmin,churchController.createRolesServants)//ok
     router.post('/assing-services',superAdmin,churchController.assignServices) //ok por correo falta hacer uno por whattsapp pero más adelante
-    router.post('/register-attends',state,defaultChurch.registerAttends)
+    router.post('/register-new-attends',state,defaultChurch.registerAttends) //ok
+    router.post('/register-sheeps',admin,defaultChurch.registerSheeps) //review okk but coninuos
+    router.post('/register-visits',admin,defaultChurch.resgisterVisits) //review
     
+   //falta asignar cursos a maestros y posteriormente a servidores y ovejas
+   
+   
     //security autorization
     
     router.post('/crearInvitacion',admin,controllerAuth.createInvitationBoarding) //ok

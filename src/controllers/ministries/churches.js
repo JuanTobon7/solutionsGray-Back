@@ -42,7 +42,7 @@ exports.createWorshipService = async(req,res) => {
             return
         }
         const churchId = req.user.church_id
-        const eventDateInUserTZ = moment.tz(date, userTimezone);    
+        const eventDateInUserTZ = moment.tz(date, userTimezone);
         const currentDateInUserTZ = moment.tz(new Date(), userTimezone);
 
         const daysDifference = eventDateInUserTZ.diff(currentDateInUserTZ, 'days');
@@ -51,9 +51,9 @@ exports.createWorshipService = async(req,res) => {
             res.status(400).send({ message: 'No se pueden programar culto con menos de 4 dias de anterioridad' });
             return;
         }
-
-        
-        const result = await serviceChurch.createWorshipService({name,date,churchId,typeEvent})        
+        //para guardar la fecha en base a la zona horaria del usuario y no del server
+        const dateWhorship = eventDateInUserTZ.format('YYYY-MM-DD HH:mm')
+        const result = await serviceChurch.createWorshipService({name,dateWhorship,churchId,typeEvent})        
         if(result instanceof Error){
             res.status(400).send({message: `Ups hubo un error ${result.message}`})
             return
@@ -115,3 +115,25 @@ exports.assignServices = async(req,res) => {
         res.status(500).send({message: e})        
     }
 }
+
+//se creara un curso
+exports.registerCourse = async(req,res) => {
+    try{        
+        const {name,publisher,description} = req.body
+        if(!name || !publisher || !description ){
+            res.status(400).send('Faltan datos para registrar el curso en cuestion')
+        }
+        
+        const result = await serviceChurch.registerCourse({name,publisher,description})
+        if(result instanceof Error){ 
+            res.status(400).send({message: result.message})
+        }
+        
+        res.status(200).send(`Se ha registrado exitosamente el curso ${name}`)
+    }catch(e){
+        console.log(e)
+        res.status(500).send('Ups algo fallo en el servidor',e)
+    }
+
+}
+ //se asignara un curso
