@@ -18,20 +18,20 @@ module.exports = function(passport){
     router.post('/verify-church-lead',invitateGuest,passport.authenticate(['oauth2-client-password'],{session: false}),controllerAuth.verifyChurchLead) //ok
     //Una vez se verifica el token de invitación para el pas o el usuario el front redirijira a la vista del Sing Up y podremos crear un usuario
     router.post('/create-user',invitateGuest,controllerAuth.singUp) //ok
-    router.post('/create-church',pastor,churchController.createChurch) //ok
-    router.post('/create-worship-service',superAdmin,churchController.createWorshipService) //ok
+    router.post('/create-church',pastor,churchController.createChurches) //ok
+    router.post('/create-worship-service',superAdmin,churchController.createWorshipServices) //ok
     router.post('/create-rol-servant',superAdmin,churchController.createRolesServants)//ok
     router.post('/assing-services',superAdmin,churchController.assignServices) //ok por correo falta hacer uno por whattsapp pero más adelante
     router.post('/register-new-attends',state,defaultChurch.registerAttends) //ok
     router.post('/register-sheeps',admin,defaultChurch.registerSheeps) //review okk but coninuos
-    router.post('/register-visits',admin,defaultChurch.resgisterVisits) //review
-    
-   //falta asignar cursos a maestros y posteriormente a servidores y ovejas
-   
-   
+    router.post('/register-visits',admin,defaultChurch.resgisterVisits) //review ok
+    router.post('/create-course',superAdmin,churchController.registerCourses)
+    router.post('/assing-courses',superAdmin,churchController.assignCourses) //remember send an Email
+    router.post('/enroll-servants-courses',state,churchController.enrollServantsCourses)   
+    router.post('/enroll-sheeps-courses',admin,churchController.enrollSheepsCourses)
     //security autorization
     
-    router.post('/crearInvitacion',admin,controllerAuth.createInvitationBoarding) //ok
+    router.post('/crearInvitacion',state,controllerAuth.createInvitationBoarding) //ok
     //se diferenciará el usario normal en cuanto que el token del pastor puesto que este tendra un atributo demás que el usuario invitado
     //tendra rol_adm mientras que el token del usuario no tendra dicho atributo
    

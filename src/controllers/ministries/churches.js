@@ -2,7 +2,7 @@ const serviceChurch = require('../../services/ministries/churches')
 const serviceEmail = require('../../services/sendEmail/email')
 const moment = require('moment-timezone')
 
-exports.createChurch = async(req,res) => {
+exports.createChurches = async(req,res) => {
     try{        
         const {name,parentChurchId,address,stateId,countryId} = req.body
         const pastorId = req.user.id
@@ -11,7 +11,7 @@ exports.createChurch = async(req,res) => {
             return
         }
 
-        const result = await serviceChurch.createChurch({name,parentChurchId,address,stateId,countryId,pastorId})
+        const result = await serviceChurch.createChurches({name,parentChurchId,address,stateId,countryId,pastorId})
 
         if(result instanceof Error){
             res.status(400).send({message: result.message})
@@ -33,7 +33,7 @@ exports.createChurch = async(req,res) => {
 //Creamos cultos en la iglesia, ojo son disintos a los eventos de los grupos
 
 
-exports.createWorshipService = async(req,res) => {
+exports.createWorshipServices = async(req,res) => {
     try{
 
         const {name,date,typeEvent,userTimezone} = req.body
@@ -53,7 +53,7 @@ exports.createWorshipService = async(req,res) => {
         }
         //para guardar la fecha en base a la zona horaria del usuario y no del server
         const dateWhorship = eventDateInUserTZ.format('YYYY-MM-DD HH:mm')
-        const result = await serviceChurch.createWorshipService({name,dateWhorship,churchId,typeEvent})        
+        const result = await serviceChurch.createWorshipServices({name,dateWhorship,churchId,typeEvent})        
         if(result instanceof Error){
             res.status(400).send({message: `Ups hubo un error ${result.message}`})
             return
@@ -112,21 +112,23 @@ exports.assignServices = async(req,res) => {
         // // }
         res.status(200).send({message: 'el servicio fue asignado correctamente'})
     }catch(e){
-        res.status(500).send({message: e})        
+        res.status(500).send('Ups algo fallo en el servidor', e)
+        return        
     }
 }
 
 //se creara un curso
-exports.registerCourse = async(req,res) => {
+exports.registerCourses = async(req,res) => {
     try{        
         const {name,publisher,description} = req.body
         if(!name || !publisher || !description ){
             res.status(400).send('Faltan datos para registrar el curso en cuestion')
         }
         
-        const result = await serviceChurch.registerCourse({name,publisher,description})
+        const result = await serviceChurch.registerCourses({name,publisher,description})
         if(result instanceof Error){ 
             res.status(400).send({message: result.message})
+            return
         }
         
         res.status(200).send(`Se ha registrado exitosamente el curso ${name}`)
@@ -136,4 +138,76 @@ exports.registerCourse = async(req,res) => {
     }
 
 }
- //se asignara un curso
+ //se asignara un curso recordar enviar email
+ exports.assignCourses = async(req,res) => {
+    try{        
+        const {courseId,teacherId} = req.body    
+        const churchId = req.user.church_id
+        if(!courseId || !teacherId){
+            res.status(400).send('Ups faltan datos para esta operacion')
+            return
+        }
+        const result = await serviceChurch.assignCourses({courseId,teacherId,churchId})
+        if(result instanceof Error){
+            res.status(400).send({message: result.message})
+            return
+        }
+        
+        res.status(200).send('Se ha asignado exitosamente este curso')
+    }catch(e){
+        console.log(e)
+        res.status(500).send('Ups algo fallo en el servidor',e)
+    }
+}
+
+//aplicar a curso como servidor
+exports.enrollServantsCourses = async (req,res) => {
+    try{        
+        const {churchCourseId,startedAt,timeZone} = req.body
+        if(!churchCourseId || !startedAt){
+            res.status(400).send('Ups no proporcionaste el curso al cual quieres inscribirte')
+            return
+        }
+        const startedDateTZ = moment.tz(startedAt,timeZone);
+        const entityColumn = 'servant_id'
+        const entityId = req.user.id
+        const result = await serviceChurch.enrollCourses({churchCourseId,startedDateTZ,entityId,entityColumn})
+        if(result instanceof Error){
+            res.status(400).send({message: result.message})
+            return
+        }
+
+        res.status(200).send('Haz sido inscrito exitosamente a este curso')
+
+    }catch(e){
+        console.log(e)
+        res.status(500).send('Ups algo fallo en el servidor',e)
+        return
+    }
+}
+
+exports.enrollSheepsCourses = async(req,res) => {
+    try{
+        const {sheepId,churchCourseId,startedAt,timeZone} = req.body
+        if(!sheepId || !churchCourseId || !startedAt || !timeZone){
+            res.status(400).send('Ups faltan datos para realizar esta operacion')
+            return
+        }
+        const startedDateTZ = moment.tz(startedAt,timeZone);
+        const entityColumn = 'sheep_id'
+        const entityId = sheepId
+        
+
+        const result = await serviceChurch.enrollCourses({entityId,entityColumn,churchCourseId,startedDateTZ})
+        if(result instanceof Error){
+            res.status(400).send({message:result.message})
+            return
+        }
+
+        res.status(200).send('Se asigno correctamente la oveja a este curso')
+
+    }catch(e){
+        console.log(e)
+        res.status(500).send('Ups algo fallo en el servidor',e)
+    }
+}
