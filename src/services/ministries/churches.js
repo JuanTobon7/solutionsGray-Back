@@ -3,7 +3,7 @@ const db = require('../../databases/relationalDB')
 const { v4: uuidv4, v4 } = require('uuid');
 const { Result } = require('neo4j-driver');
 
-exports.createChurch = async(data) => {
+exports.createChurches = async(data) => {
     let id, result
     do{        
         churchId = uuidv4()
@@ -41,7 +41,7 @@ exports.createChurch = async(data) => {
     return result.rows[0]
 }
 
-exports.createWorshipService = async(data) => {
+exports.createWorshipServices = async(data) => {
     let query,result,id
     do{
         id = uuidv4()
@@ -156,4 +156,74 @@ exports.assignServices = async (data) => {
         console.log(e);
         return e;
     }
-};
+};  
+
+exports.registerCourses = async(data) => {
+    let id,query,result
+    do{
+        id = uuidv4()
+        query = `SELECT * FROM courses WHERE id = $1;`
+        result = await db.query(query,[id])
+    }while(result.rows.length !== 0)
+
+    query = `INSERT INTO courses (id,name,publisher,description) VALUES ($1,$2,$3,$4) RETURNING *;`
+    result = await db.query(query,[id,data.name,data.publisher,data.description])
+    
+    if(result.rows.length === 0){
+        return new Error('Ups algo paso al registrar el curso')
+    }
+
+    return result.rows[0]
+}
+
+exports.assignCourses = async(data)=>{
+    let id,query,result
+    do{
+        id = uuidv4()
+        query = `SELECT * FROM church_courses WHERE id = $1;`
+        result = await db.query(query,[id])
+    }while(result.rows.length !== 0)
+    
+    query = `INSERT INTO church_courses (id,course_id,church_id,teacher_id)
+            VALUES ($1,$2,$3,$4)
+            RETURNING *
+        `
+    result = await db.query(query,[id,data.courseId,data.churchId,data.teacherId])
+
+    if(result.rows.length === 0){
+        return new Error('Ups algo fallo al asignar el curso a tal profesor en nuestra Base de datos')        
+    }
+
+    return result.rows[0]
+
+}
+
+exports.enrollCourses = async(data) => {
+    let id,result,query
+    do{
+        id = uuidv4()
+        query = `
+            SELECT * FROM entity_courses WHERE id = $1;
+        `
+        result = await db.query(query,[id])
+    }while(result.rows.length!==0)
+
+    query = `SELECT * FROM entity_courses WHERE sheep_id = $1 OR servant_id = $1;`
+    result = await db.query(query,[data.entityId])
+
+    if(result.rows.length !== 0){
+        return new Error('Ya se ha realizado este registro anteriormente')        
+    }
+
+    query = `
+        INSERT INTO entity_courses (id,${data.entityColumn},started_at,course_id)
+        VALUES ($1,$2,$3,$4)
+        RETURNING *;
+    `
+    result = await db.query(query,[id,data.entityId,data.startedDateTZ,data.churchCourseId])
+    if(result.rows.length === 0){
+        return new Error('Ups algo fallo al guardar tu inscripcion en nuestra base de datos')
+    }
+
+    return result.rows[0]
+}
