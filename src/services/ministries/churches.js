@@ -219,3 +219,39 @@ exports.enrollCourses = async (data) => {
 
   return result.rows[0]
 }
+
+exports.getChurchInfo = async (churchId) => {
+  console.log(`churchId: ${churchId}`)
+  const query = `
+    SELECT
+    ch.name,
+    ch.address,
+    ch.state_id AS stateId,
+    ch.country_id AS countryId,
+    COUNT(DISTINCT s.id) AS quantityServants,
+    COUNT(DISTINCT sh.id) AS quantitySheeps,
+    COUNT(DISTINCT g.id) AS quantityGroups
+    FROM churches ch
+    LEFT JOIN servants s ON ch.id = s.church_id
+    LEFT JOIN new_attendees att ON att.church_id = ch.id
+    LEFT JOIN sheeps sh ON sh.attendee_id = att.id
+    LEFT JOIN group_churches g ON ch.id = g.church_id
+    WHERE ch.id = $1
+    GROUP BY ch.name, ch.address, ch.state_id, ch.country_id;
+
+  `
+  const result = await db.query(query, [churchId])
+  if (result.rows.length === 0) {
+    return new Error('No hay informacion que mostrar')
+  }
+  return result.rows
+}
+
+exports.getCourses = async () => {
+  const query = 'SELECT * FROM courses;'
+  const result = await db.query(query)
+  if (result.rows.length === 0) {
+    return new Error('Ups no pudimos obtener los cursos')
+  }
+  return result.rows
+}
