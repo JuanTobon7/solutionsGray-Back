@@ -84,3 +84,41 @@ exports.resgisterVisits = async (data) => {
 
   return result.rows[0]
 }
+
+exports.getSheeps = async (churchId) => {
+  const query = `
+    SELECT 
+      sh.status,
+      sh.description,
+      sh.guide_id as guideID ,
+      att.name,
+      att.email
+    FROM new_attendees att
+    JOIN sheeps sh ON att.id = sh.attendee_id
+    WHERE att.church_id = $1
+  `
+  const result = await db.query(query, [churchId])
+  if (result.rows.length === 0) {
+    return new Error('Ups no hay ovejas por mostrar')
+  }
+  return result.rows
+}
+
+exports.getServants = async (churchId) => {
+  const query = `
+  SELECT
+    s.name,
+    s.email,
+    s.phone_number,
+    COUNT (DISTINCT sh.id) AS cuantity_sheeps_guide
+  FROM servants s
+  JOIN sheeps sh ON s.id = sh.guide_id
+  WHERE s.church_id = $1
+  GROUP BY s.name,s.email,s.phone_number
+  `
+  const result = await db.query(query, [churchId])
+  if (result.rows.length === 0) {
+    return new Error('Ups no hay servidores por mostrar')
+  }
+  return result.rows
+}

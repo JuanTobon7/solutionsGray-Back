@@ -196,3 +196,34 @@ exports.enrollSheepsCourses = async (req, res) => {
     res.status(500).send('Ups algo fallo en el servidor', e)
   }
 }
+
+exports.getChurchInfo = async (req, res) => {
+  try {
+    const { churchId } = req.user
+    if (!churchId) {
+      throw new Error('No podemos hallar la informacion de la iglesia a la que asistes')
+    }
+    const result = await serviceChurch.getChurchInfo(churchId)
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+
+    res.status(200).send(result)
+  } catch (e) {
+    console.log('error:', e)
+    res.status(500).send('Ups algo fallo en el servidor', e)
+  }
+}
+
+exports.getCourses = async (res) => {
+  try {
+    const result = await serviceChurch.getCourses()
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+    }
+  } catch (e) {
+    console.log(e)
+    res.status(500).send('Ups algo paso en el servidor,', e)
+  }
+}
