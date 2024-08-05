@@ -70,12 +70,34 @@ exports.resgisterVisits = async (req, res) => {
 
 exports.getSheeps = async (req, res) => {
   try {
+    console.log('coming here sheeps')
     const { churchId } = req.user
     if (!churchId) {
       throw new Error('No se pudo acceder a las credenciales')
     }
 
     const result = await serviceDefault.getSheeps(churchId)
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send(result)
+  } catch (e) {
+    console.log(e)
+    res.status(500).send('Ups algo fallo en el servidor', e)
+  }
+}
+
+exports.getSheep = async (req, res) => {
+  try {
+    const { id } = req.params
+    const churchId = req.user.churchId
+    if (!id) {
+      res.status(400).send('No se pudo acceder a las credenciales')
+      return
+    }
+
+    const result = await serviceDefault.getSheep({ id, churchId })
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })
       return
