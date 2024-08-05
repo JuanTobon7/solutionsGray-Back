@@ -7,6 +7,11 @@ module.exports = function (passport) {
   const defaultChurch = require('../controllers/ministries/default') // controller for shared functions between church groups (e.g. cell groups or houses of worship) and the church
   const router = express.Router()
 
+  router.get('/', (req, res) => {
+    console.log('entro')
+    res.status(200).send({ message: 'conectado' })
+    console.log('conecto')
+  })
   router.post('/save-leads-church', defaultController.sendLead) // ok
   router.post('/enroll-servants-courses', state, churchController.enrollServantsCourses)
   // auth
@@ -31,7 +36,7 @@ module.exports = function (passport) {
   router.post('/create-course', superAdmin, churchController.registerCourses)
   router.post('/assing-courses', superAdmin, churchController.assignCourses) // remember send an Email
   router.post('/crearInvitacion', superAdmin, controllerAuth.createInvitationBoarding) // ok
-  router.get('/church', superAdmin, churchController.getChurchInfo)
+  router.get('/church', state, churchController.getChurchInfo)
   router.get('/servants', superAdmin, defaultChurch.getServants)
   router.get('/courses', superAdmin, churchController.getCourses)
   // pastor endpoints

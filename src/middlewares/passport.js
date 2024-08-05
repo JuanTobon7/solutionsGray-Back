@@ -7,8 +7,10 @@ const oauth2Service = require('../services/ouath2')
 
 passport.use(new StrategyAuth(function (cliendID, clientSecret, done) {
   try {
+    console.log('entro a login jeje')
     if (cliendID !== process.env.SSR_CLIENT_ID || clientSecret !== process.env.SSR_CLIENT) {
       // falta middlewares para manejar errores
+      console.log('No son')
       const error = 'Cliente Incorrecto'
       throw error
     }
