@@ -76,7 +76,7 @@ exports.singUp = async (data) => {
 exports.singIn = async (email, password) => {
   try {
     const query = `
-            SELECT s.id as id, s.password,r.name as rol_name  FROM servants s
+            SELECT s.id as id,s.name,s.email,s.password,r.name as rol_name  FROM servants s
             JOIN roles_administratives r ON r.id = s.rol_adm 
             WHERE s.email = $1;
         `

@@ -2,7 +2,7 @@
   "name": "solutionsGray",
   "scripts": {
     "dev": "nodemon server.js",
-     "lint": "eslint .",
+    "lint": "eslint .",
     "standard": "standard"
   },
   "dependencies": {
