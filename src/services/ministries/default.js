@@ -88,6 +88,7 @@ exports.resgisterVisits = async (data) => {
 exports.getSheeps = async (churchId) => {
   const query = `
     SELECT 
+      sh.id,
       sh.status,
       sh.description,
       sh.guide_id as guideID ,
