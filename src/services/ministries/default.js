@@ -121,7 +121,7 @@ exports.getSheep = async (data) => {
       sh.id,
       sh.status,
       e.date AS arrival_date,
-      sh.description,
+      sv.description,
       sh.guide_id AS guideID,
       sv.visit_date AS last_visit,
       att.name,
@@ -132,7 +132,7 @@ exports.getSheep = async (data) => {
     JOIN sheep_visits sv ON sh.id = sv.sheep_id
     JOIN events e ON att.event_id = e.id
     WHERE att.church_id = $1 AND sh.id = $2
-    GROUP BY sh.id,sh.status,e.date,sh.description,sh.guide_id,att.name,att.email,sv.visit_date
+    GROUP BY sh.id,sh.status,e.date,sh.description,sh.guide_id,att.name,att.email,sv.description,sv.visit_date
   `
   const result = await db.query(query, [data.churchId, data.id])
 
