@@ -38,6 +38,7 @@ exports.singUp = async (req, res) => {
 
 exports.sigIn = async (req, res) => {
   try {
+    console.log('entro a singIn')
     const { email, password } = req.body
     if (!email || !password) {
       const error = new Error('Datos faltantes')
@@ -58,7 +59,11 @@ exports.sigIn = async (req, res) => {
       ouathId: process.env.SSR_CLIENT_ID
     }
     const token = jwt.encode(payload, process.env.JWT_SECRET, 'HS256')
-    const refreshToken = await ouath2Services.createRefreshToken({ userId: payload.sub, created: payload.iat, expires: payload.exp })
+    const refreshToken = await ouath2Services.createRefreshToken({
+      userId: payload.sub,
+      created: payload.iat,
+      expires: payload.exp
+    })
     res.cookie('access_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -71,7 +76,17 @@ exports.sigIn = async (req, res) => {
       maxAge: duration * 1000
     })
 
-    res.status(200).send({ message: 'Inicio de sesión exitoso', jwtDecodified: payload })
+    const userData = {
+      name: result.name,
+      email: result.email,
+      rol: result.rol_name
+    }
+    const response = {
+      ...userData,
+      message: 'Inicio de sesión exitoso'
+    }
+    console.log('user data information to front: ', userData)
+    res.status(200).send(response)
   } catch (err) {
     console.error('Error en sigIn: ', err)
     res.status(500).send({ message: 'Error interno del servidor', error: err.message })
@@ -160,3 +175,4 @@ exports.verifyChurchLead = async (req, res) => {
     res.status(500).sned('Ups algo fallo en el servidor,', e)
   }
 }
+// haz algo escribe algo que me deje ver un console.log
