@@ -23,7 +23,7 @@ exports.registerAttends = async (req, res) => {
     res.status(500).send('Error en el servidor', e)
   }
 }
-
+// cambiar funcion para poder elegir a quien asignar la oveja
 exports.registerSheeps = async (req, res) => {
   try {
     const { attendeeId, description } = req.body
@@ -98,6 +98,22 @@ exports.getSheep = async (req, res) => {
     }
 
     const result = await serviceDefault.getSheep({ id, churchId })
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send(result)
+  } catch (e) {
+    console.log(e)
+    res.status(500).send('Ups algo fallo en el servidor', e)
+  }
+}
+
+exports.getMySheeps = async (req, res) => {
+  try {
+    const { id } = req.user
+    const { churchId } = req.user
+    const result = await serviceDefault.getMySheeps({ id, churchId })
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })
       return

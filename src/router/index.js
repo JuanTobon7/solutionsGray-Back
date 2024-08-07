@@ -30,6 +30,7 @@ module.exports = function (passport) {
   router.post('/enroll-sheeps-courses', admin, churchController.enrollSheepsCourses)
   router.get('/sheeps', admin, defaultChurch.getSheeps)
   router.get('/sheep/:id', admin, defaultChurch.getSheep)
+  router.get('/my-sheeps', admin, defaultChurch.getMySheeps)
   // super admin endpoints
   router.post('/create-worship-service', superAdmin, churchController.createWorshipServices) // ok
   router.post('/create-rol-servant', superAdmin, churchController.createRolesServants)// ok

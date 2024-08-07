@@ -143,6 +143,36 @@ exports.getSheep = async (data) => {
   return result.rows[0]
 }
 
+exports.getMySheeps = async (data) => {
+  const query = `
+    SELECT
+      sh.id,
+      sh.status,
+      e.date AS arrival_date,
+      sh.description,
+      sh.guide_id AS guideID,
+      att.name,
+      att.email,
+      (SELECT sv2.visit_date
+       FROM sheep_visits sv2
+       WHERE sv2.sheep_id = sh.id
+       ORDER BY sv2.visit_date DESC
+       LIMIT 1) AS last_visit,
+      COUNT(sv.id) AS quantity_visits
+    FROM new_attendees att
+    JOIN sheeps sh ON att.id = sh.attendee_id
+    JOIN sheep_visits sv ON sh.id = sv.sheep_id
+    JOIN events e ON att.event_id = e.id
+    WHERE att.church_id = $1 AND sh.guide_id = $2
+    GROUP BY sh.id, sh.status, e.date, sh.description, sh.guide_id, att.name, att.email
+  `
+  const result = await db.query(query, [data.churchId, data.id])
+  if (result.rows.length === 0) {
+    return new Error('Ups no hay ovejas por mostrar')
+  }
+  return result.rows
+}
+
 exports.getServants = async (churchId) => {
   const query = `
   SELECT
