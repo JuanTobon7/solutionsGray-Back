@@ -176,14 +176,37 @@ exports.getMySheeps = async (data) => {
 exports.getServants = async (churchId) => {
   const query = `
   SELECT
+    s.id,
     s.name,
     s.email,
     s.phone_number,
-    COUNT (DISTINCT sh.id) AS cuantity_sheeps_guide
+    (SELECT rs.name 
+     FROM services srv 
+     LEFT JOIN roles_servants rs ON srv.rol_servant_id = rs.id 
+     WHERE srv.servant_id = s.id 
+     GROUP BY rs.name 
+     ORDER BY COUNT(*) DESC 
+     LIMIT 1) AS usual_rol,
+    (SELECT e.date FROM events e
+      JOIN services srv ON e.id = srv.event_id
+      ORDER BY e.date DESC
+    ) AS last_service,
+    (SELECT c.name FROM courses c
+    JOIN church_courses chc ON c.id = chc.course_id
+    JOIN entity_courses ec ON chc.id = ec.course_id
+    WHERE ec.servant_id = s.id
+    ORDER BY ec.started_at DESC
+    LIMIT 1) AS last_course,
+    (SELECT status FROM entity_courses
+     WHERE servant_id = s.id
+     ORDER BY started_at DESC
+     LIMIT 1
+     )  as status_course,
+    COUNT (DISTINCT sh.id) AS cuantity_sheeps_guide    
   FROM servants s
   JOIN sheeps sh ON s.id = sh.guide_id
   WHERE s.church_id = $1
-  GROUP BY s.name,s.email,s.phone_number
+  GROUP BY s.name,s.email,s.phone_number,s.id,usual_rol
   `
   const result = await db.query(query, [churchId])
   if (result.rows.length === 0) {

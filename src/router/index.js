@@ -37,7 +37,7 @@ module.exports = function (passport) {
   router.post('/assing-services', superAdmin, churchController.assignServices) // ok por correo falta hacer uno por whattsapp pero más adelante
   router.post('/create-course', superAdmin, churchController.registerCourses)
   router.post('/assing-courses', superAdmin, churchController.assignCourses) // remember send an Email
-  router.post('/crearInvitacion', superAdmin, controllerAuth.createInvitationBoarding) // ok
+  router.post('/invitation-boarding', superAdmin, controllerAuth.createInvitationBoarding) // ok
   router.get('/church', state, churchController.getChurchInfo)
   router.get('/servants', superAdmin, defaultChurch.getServants)
   router.get('/courses', superAdmin, churchController.getCourses)
