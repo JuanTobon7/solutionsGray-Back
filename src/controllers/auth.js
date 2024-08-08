@@ -113,16 +113,13 @@ exports.createInvitationBoarding = async (req, res) => {
       return
     }
 
-    const churchName = req.user.church_name
+    const churchName = req.user.churchName
     const invitation = await sendEmail.sendInvitationOnBoarding(email, churchName)
     if (!invitation) {
       res.status(400).sendd('Ups algo salio mal, intenta nuevamente')
     }
-    const token = {
-      ...result,
-      church_id: req.user.church_id
-    }
-    res.status(200).send({ message: token })
+
+    res.status(200).send(' Invitación enviada exitosamente')
   } catch (err) {
     console.error('Error en createInvitation: ', err)
     res.status(500).send({ message: 'Error interno del servidor', error: err.message })
