@@ -19,13 +19,15 @@ const compileTemplate = (templateName, data) => {
   }
 }
 
-exports.sendInvitationOnBoarding = async (email, ministerio) => {
+exports.sendInvitationOnBoarding = async (data) => {
   try {
-    const htmlToSend = compileTemplate('invitationBoarding', { ministerio })
+    console.log('i\'m in sendInvitationOnBoarding')
+    const { churchName, email, token, inviterName } = data
+    const htmlToSend = compileTemplate('invitationBoarding', { churchName, token, inviterName })
     const mailOptions = {
       from: process.env.USER_EMAIL_INVITATION,
       to: email,
-      subject: `Ven y Haz Parte del Ministerio ${ministerio}`,
+      subject: `Ven y Haz Parte del Ministerio ${churchName}`,
       html: htmlToSend
     }
     const result = await transporter.transporterGmail.sendMail(mailOptions)

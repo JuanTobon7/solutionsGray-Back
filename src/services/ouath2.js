@@ -2,18 +2,19 @@ const db = require('../databases/relationalDB')
 const bcrypt = require('bcrypt')
 const { v4: uuidv4 } = require('uuid')
 
-exports.verifyInvitationsLead = async (email) => {
+exports.verifyInvitationsLead = async (id) => {
+  console.log('id: ', id)
   const query = `
         SELECT 'in_invitations' AS source
         FROM invitations
-        WHERE email = $1
+        WHERE id = $1
         UNION ALL
         SELECT 'in_leads_pastor_churches' AS source
         FROM leads_pastor_churches
-        WHERE email = $1;
+        WHERE id = $1;
 
     `
-  const result = await db.query(query, [email])
+  const result = await db.query(query, [id])
   console.log(result.rows)
   if (result.rows.length === 0) {
     return { in_invitations: false, in_leads_pastor_churches: false }
@@ -139,8 +140,8 @@ exports.createInvitationBoarding = async (email, inviterId, created, expires) =>
   }
 }
 
-exports.getInvitationBoarding = async (email) => {
-  if (!email) {
+exports.getInvitationBoarding = async (tokenId) => {
+  if (!tokenId) {
     return new Error('Email no fue proporcionado')
   }
   console.log('here here')
@@ -148,9 +149,9 @@ exports.getInvitationBoarding = async (email) => {
         SELECT i.* ,s.church_id
         FROM invitations i
         JOIN servants s ON s.id = i.inviter_id 
-        WHERE i.email = $1;
+        WHERE i.id = $1;
     `
-  const result = await db.query(query, [email])
+  const result = await db.query(query, [tokenId])
   console.log('aqui tamos')
   if (result.rows.length === 0) {
     return 'No estas afiliado'
@@ -165,6 +166,7 @@ exports.acceptInvitation = async (email) => {
   if (result.rows.length === 0) {
     return new Error('Ups no estabas en nuestra base de datos como invitado')
   }
+  console.log('result: ', result.rows[0])
   return result.rows[0]
 }
 

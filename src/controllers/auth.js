@@ -100,26 +100,39 @@ exports.createInvitationBoarding = async (req, res) => {
     if (!email) {
       return res.status(400).send('No proporcionaste el email')
     }
-
+    const inviterName = req.user.name
     const duration = 60 * 60 * 24 * 27 // 27 días
     const created = moment().format('X')
     const expires = moment().add(duration, 'seconds').format('X')
     const inviterId = req.user.id
-
+    console.log('Going into createInvitationBoarding')
     const result = await ouath2Services.createInvitationBoarding(email, inviterId, created, expires)
 
     if (result instanceof Error) {
       res.status(401).send({ message: result.message })
       return
     }
+    console.log('result of createInvitationBoarding: ', result)
+    const payload = {
+      tokenId: result.id,
+      duration,
+      created,
+      expires,
+      inviterId
+    }
+
+    console.log('payload of invitation token: ', payload)
+
+    const token = jwt.encode(payload, process.env.INVITATE_SECRET, 'HS256')
 
     const churchName = req.user.churchName
-    const invitation = await sendEmail.sendInvitationOnBoarding(email, churchName)
+    console.log('Going into sendEmail')
+    const invitation = await sendEmail.sendInvitationOnBoarding({ email, churchName, token, inviterName })
     if (!invitation) {
       res.status(400).sendd('Ups algo salio mal, intenta nuevamente')
     }
 
-    res.status(200).send(' Invitación enviada exitosamente')
+    res.status(200).send({ message: ' Invitación enviada exitosamente' })
   } catch (err) {
     console.error('Error en createInvitation: ', err)
     res.status(500).send({ message: 'Error interno del servidor', error: err.message })
@@ -129,25 +142,27 @@ exports.createInvitationBoarding = async (req, res) => {
 exports.acceptInvitation = async (req, res) => {
   try {
     const invitate = req.newUser
-
+    console.log('invitate: ', invitate)
     if (!invitate) {
-      res.status(400).send('No tienes credenciales para estar aqui')
+      res.status(400).send({ message: 'No tienes credenciales para estar aqui' })
       return
     }
 
-    const payload = jwt.decode(token, process.env.INVITATE_SECRET, 'HS256') // decode token
-    const { tokenId } = payload
+    if (invitate.status === 'accept') {
+      res.status(200).send({ message: 'Ya Haz sido aceptado' })
+      return
+    }
 
     const result = await ouath2Services.acceptInvitation(invitate.email)
     if (result instanceof Error) {
-      res.status(401).send('No Haz sido invitado')
+      res.status(401).send({ message: 'No Haz sido invitado' })
       return
     }
 
-    res.status(200).send({ message: result })
+    res.status(200).send({ message: 'Ya Haz sido aceptado' })
   } catch (e) {
     console.log(e)
-    res.status(400).send('Ups hubo un error', e)
+    res.status(400).send({ message: `Ups hubo un error ${e.message}` })
   }
 }
 
