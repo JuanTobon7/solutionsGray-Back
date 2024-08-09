@@ -135,10 +135,8 @@ exports.acceptInvitation = async (req, res) => {
       return
     }
 
-    if (invitate.status === 'accept') {
-      res.status(200).send('Ya habias sido verificado')
-      return
-    }
+    const payload = jwt.decode(token, process.env.INVITATE_SECRET, 'HS256') // decode token
+    const { tokenId } = payload
 
     const result = await ouath2Services.acceptInvitation(invitate.email)
     if (result instanceof Error) {
