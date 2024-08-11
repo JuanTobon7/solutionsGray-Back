@@ -6,6 +6,7 @@ exports.findById = async (id) => {
     SELECT
     s.id,
     s.name,
+    s.email,
     r.name as rol_name,
     s.church_id as church_id,
     s.country_id as country_id,
@@ -19,7 +20,6 @@ exports.findById = async (id) => {
     if (user.rows.length === 0) {
       return new Error('ups hubo un error en la query')
     }
-    console.log('yupiii', user.rows)
     const payload = {
       id: user.rows[0].id,
       name: user.rows[0].name,

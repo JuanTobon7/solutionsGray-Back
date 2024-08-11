@@ -22,8 +22,8 @@ module.exports = async function (req, res, next) {
       req.user = dataUser
       console.log('here here here req.user', req.user)
     } catch (err) {
-      console.log(err)
-      return res.status(400).send({ message: err.message })
+      res.clearCookie('access_token')
+      req.tokenError = err
     }
   }
   await next()
