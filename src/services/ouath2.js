@@ -32,16 +32,29 @@ exports.getInfoFromValidToken = async (rtoken) => {
     return new Error('token invalido')
   }
   const query = `
-        SELECT rt.*,s.name FROM refresh_token rt
-        JOIN servants s ON s.id = rt.user_id
+        SELECT 
+        s.id,
+        s.name,
+        rt.expires_at,
+        r.name as rol_name
+        FROM refresh_token rt
+        LEFT JOIN servants s ON s.id = rt.user_id
+        LEFT JOIN roles_administratives r ON r.id = s.rol_adm
         WHERE rt.id = $1;
     `
   const result = await db.query(query, [rtoken])
-  return result
+  if (result.rows.length === 0) {
+    return new Error('token invalido')
+  }
+  const payload = {
+    userId: result.rows[0].id,
+    rolName: result.rows[0].rol_name,
+    expiresAt: result.rows[0].expires_at
+  }
+  return payload
 }
 
 exports.singUp = async (data) => {
-  console.log('entramos a singUp service')
   let id, result
   do {
     id = uuidv4()

@@ -3,6 +3,54 @@ const moment = require('moment')
 const jwt = require('jwt-simple')
 const sendEmail = require('../services/sendEmail/email')
 
+exports.refreshToken = async (req, res) => {
+  try {
+    const refreshToken = req.cookies.refresh_token
+    if (!refreshToken) {
+      res.status(401).send({ message: 'No tienes permisos' })
+      return
+    }
+    const result = await ouath2Services.getInfoFromValidToken(refreshToken)
+    if (result instanceof Error) {
+      res.status(401).send({ message: result.message })
+      return
+    }
+    if (result.expiresAt < moment().format('X')) {
+      return res.status(401).send({ message: 'El token ha expirado' })
+    }
+    const duration = 60 * 2 // 20 min
+    const payload = {
+      sub: result.userId,
+      rolName: result.rolName,
+      iat: moment().format('X'),
+      exp: moment().add(duration, 'seconds').format('X'),
+      ouathId: process.env.SSR_CLIENT_ID
+    }
+    const token = jwt.encode(payload, process.env.JWT_SECRET, 'HS256')
+    const durationRefresh = 60 * 60 * 24 * 3 // 3 días
+    const newRefreshToken = await ouath2Services.createRefreshToken({
+      userId: payload.sub,
+      created: payload.iat,
+      expires: durationRefresh
+    })
+    res.cookie('access_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: duration * 2 * 1000
+    })
+
+    res.cookie('refresh_token', newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: durationRefresh * 1000
+    })
+    res.status(200).send({ message: 'Token actualizado' })
+  } catch (err) {
+    console.error('Error en refreshToken: ', err)
+    res.status(500).send({ message: 'Error interno del servidor', error: err.message })
+  }
+}
+
 exports.singUp = async (req, res) => {
   try {
     console.log('entramos a singUp ctrl')
@@ -50,7 +98,7 @@ exports.sigIn = async (req, res) => {
       res.status(401).send({ message: result.message })
       return
     }
-    const duration = 60 * 60 * 1 // 1 hora
+    const duration = 10 // 10 seg
     const payload = {
       sub: result.id,
       rolName: result.rol_name,
@@ -59,21 +107,23 @@ exports.sigIn = async (req, res) => {
       ouathId: process.env.SSR_CLIENT_ID
     }
     const token = jwt.encode(payload, process.env.JWT_SECRET, 'HS256')
+    const durationRefresh = 60 * 60 * 24 * 27 // 27 días
     const refreshToken = await ouath2Services.createRefreshToken({
       userId: payload.sub,
       created: payload.iat,
-      expires: payload.exp
+      expires: durationRefresh
     })
+    const durationToken = 60 * 10 // 10 minutos
     res.cookie('access_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: duration * 1000
+      maxAge: durationToken * 1000
     })
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: duration * 1000
+      maxAge: durationRefresh * 1000
     })
 
     const userData = {
