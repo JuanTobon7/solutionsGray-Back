@@ -43,13 +43,24 @@ exports.createWorshipServices = async (data) => {
     query = 'SELECT * FROM events WHERE id = $1;'
     result = await db.query(query, [id])
   } while (result.rows.length > 0)
-  query = 'INSERT INTO events (id,name,date,church_id) VALUES ($1,$2,$3,$4) RETURNING *;'
-  result = await db.query(query, [id, data.name, data.dateWhorship, data.churchId])
+  query = 'INSERT INTO events (id,name,date,church_id,description) VALUES ($1,$2,$3,$4) RETURNING *;'
+  result = await db.query(query, [id, data.name, data.dateWhorship, data.churchId, data.description])
   if (result.rows.length === 0) {
     return new Error('Ups algo fallo al guardar el culto')
   }
 
   return result.rows[0]
+}
+
+exports.getWorshipServices = async (churchId) => {
+  const query = 'SELECT * FROM events WHERE church_id = $1;'
+  const result = await db.query(query, [churchId])
+
+  if (result.rows.length === 0) {
+    return new Error('No hay eventos para mostrar')
+  }
+
+  return result.rows
 }
 
 exports.createRolesServants = async (name) => {

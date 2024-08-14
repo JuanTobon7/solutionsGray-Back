@@ -25,6 +25,7 @@ module.exports = function (passport) {
   // user endpoints
   router.use(state)
   router.get('/basic-info-user', userController.basicInfo) // ok
+  router.get('/worship-services', churchController.getWorshipServices)
   router.post('/register-new-attends', defaultChurch.registerAttends) // ok
   router.post('/enroll-servants-courses', churchController.enrollServantsCourses)
 
@@ -37,6 +38,7 @@ module.exports = function (passport) {
   router.get('/my-sheeps', admin, defaultChurch.getMySheeps)
   // super admin endpoints
   router.post('/create-worship-service', superAdmin, churchController.createWorshipServices) // ok
+
   router.post('/create-rol-servant', superAdmin, churchController.createRolesServants)// ok
   router.post('/assing-services', superAdmin, churchController.assignServices) // ok por correo falta hacer uno por whattsapp pero más adelante
   router.post('/create-course', superAdmin, churchController.registerCourses)
@@ -70,6 +72,7 @@ async function pastor (req, res, next) {
 }
 
 async function state (req, res, next) {
+  console.log('comming here in state')
   console.log(req.cookies)
   console.log(req.tokenError)
   if (req.tokenError) {

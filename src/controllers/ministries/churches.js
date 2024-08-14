@@ -29,7 +29,7 @@ exports.createChurches = async (req, res) => {
 
 exports.createWorshipServices = async (req, res) => {
   try {
-    const { name, date, typeEvent, userTimezone } = req.body
+    const { name, date, typeEvent, userTimezone, description } = req.body
     if (!name || !date || !typeEvent || !userTimezone) {
       res.status(400).send('Datos incompletos')
       return
@@ -46,13 +46,27 @@ exports.createWorshipServices = async (req, res) => {
     }
     // para guardar la fecha en base a la zona horaria del usuario y no del server
     const dateWhorship = eventDateInUserTZ.format('YYYY-MM-DD HH:mm')
-    const result = await serviceChurch.createWorshipServices({ name, dateWhorship, churchId, typeEvent })
+    const result = await serviceChurch.createWorshipServices({ name, dateWhorship, churchId, typeEvent, description })
     if (result instanceof Error) {
       res.status(400).send({ message: `Ups hubo un error ${result.message}` })
       return
     }
     // aqui es necesario enviar por correo el hecho de que se creo un culto
     res.status(200).send({ message: 'Culto creado exitosamente' })
+  } catch (e) {
+    res.status(500).send({ message: `Ups hubo un error ${e}` })
+  }
+}
+
+exports.getWorshipServices = async (req, res) => {
+  try {
+    const { churchId } = req.user
+    const result = await serviceChurch.getWorshipServices(churchId)
+
+    if (result instanceof Error) {
+      res.status(400).send({ message: `Ups hubo un error ${result.message}` })
+    }
+    res.status(200).send(result)
   } catch (e) {
     res.status(500).send({ message: `Ups hubo un error ${e}` })
   }

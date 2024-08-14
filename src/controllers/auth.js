@@ -159,7 +159,7 @@ exports.createInvitationBoarding = async (req, res) => {
     const result = await ouath2Services.createInvitationBoarding(email, inviterId, created, expires)
 
     if (result instanceof Error) {
-      res.status(401).send({ message: result.message })
+      res.status(400).send({ message: result.message })
       return
     }
     console.log('result of createInvitationBoarding: ', result)
@@ -179,7 +179,7 @@ exports.createInvitationBoarding = async (req, res) => {
     console.log('Going into sendEmail')
     const invitation = await sendEmail.sendInvitationOnBoarding({ email, churchName, token, inviterName })
     if (!invitation) {
-      res.status(400).sendd('Ups algo salio mal, intenta nuevamente')
+      res.status(400).send('Ups algo salio mal, intenta nuevamente')
     }
 
     res.status(200).send({ message: ' Invitación enviada exitosamente' })

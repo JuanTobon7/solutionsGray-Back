@@ -142,7 +142,7 @@ exports.createInvitationBoarding = async (email, inviterId, created, expires) =>
     const result = await db.query(query, [id, inviterId, email, created, expires])
 
     if (result.rows.length === 0) {
-      return new Error('Error al Insertar Dato')
+      return new Error('Ya se envio una invitacion a este correo')
     }
     const data = result.rows[0]
     return data
