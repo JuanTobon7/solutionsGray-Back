@@ -87,17 +87,86 @@ exports.resgisterVisits = async (data) => {
 
 exports.getSheeps = async (churchId) => {
   const query = `
-    SELECT 
+    SELECT
+      sh.id,
       sh.status,
+      e.date AS arrival_date,
       sh.description,
-      sh.guide_id as guideID ,
+      sh.guide_id AS guideID,
       att.name,
-      att.email
+      att.email,
+      (SELECT sv2.visit_date
+       FROM sheep_visits sv2
+       WHERE sv2.sheep_id = sh.id
+       ORDER BY sv2.visit_date DESC
+       LIMIT 1) AS last_visit,
+      COUNT(sv.id) AS quantity_visits
     FROM new_attendees att
     JOIN sheeps sh ON att.id = sh.attendee_id
+    JOIN sheep_visits sv ON sh.id = sv.sheep_id
+    JOIN events e ON att.event_id = e.id
     WHERE att.church_id = $1
+    GROUP BY sh.id, sh.status, e.date, sh.description, sh.guide_id, att.name, att.email
   `
   const result = await db.query(query, [churchId])
+  if (result.rows.length === 0) {
+    return new Error('Ups no hay ovejas por mostrar')
+  }
+  return result.rows
+}
+
+exports.getSheep = async (data) => {
+  const query = `
+    SELECT 
+      sh.id,
+      sh.status,
+      e.date AS arrival_date,
+      sv.description,
+      sh.guide_id AS guideID,
+      sv.visit_date AS last_visit,
+      att.name,
+      att.email,
+      COUNT(sv.id) AS cuantity_visits
+    FROM new_attendees att    
+    JOIN sheeps sh ON att.id = sh.attendee_id
+    JOIN sheep_visits sv ON sh.id = sv.sheep_id
+    JOIN events e ON att.event_id = e.id
+    WHERE att.church_id = $1 AND sh.id = $2
+    GROUP BY sh.id,sh.status,e.date,sh.description,sh.guide_id,att.name,att.email,sv.description,sv.visit_date
+  `
+  const result = await db.query(query, [data.churchId, data.id])
+
+  if (result.rows.length === 0) {
+    return new Error('Ups no hay ovejas por mostrar')
+  }
+
+  return result.rows[0]
+}
+
+exports.getMySheeps = async (data) => {
+  const query = `
+    SELECT
+      sh.id,
+      sh.status,
+      e.date AS arrival_date,
+      sh.description,
+      sh.guide_id AS guideID,
+      att.name,
+      att.email,
+      (SELECT sv2.visit_date
+       FROM sheep_visits sv2
+       WHERE sv2.sheep_id = sh.id
+       ORDER BY sv2.visit_date DESC
+       LIMIT 1) AS last_visit,
+      COUNT(sv.id) AS quantity_visits
+    FROM new_attendees att
+    JOIN sheeps sh ON att.id = sh.attendee_id
+    JOIN sheep_visits sv ON sh.id = sv.sheep_id
+    JOIN events e ON att.event_id = e.id
+    WHERE att.church_id = $1 AND sh.guide_id = $2
+    GROUP BY sh.id, sh.status, e.date, sh.description, sh.guide_id, att.name, att.email
+  `
+  const result = await db.query(query, [data.churchId, data.id])
   if (result.rows.length === 0) {
     return new Error('Ups no hay ovejas por mostrar')
   }
@@ -107,14 +176,37 @@ exports.getSheeps = async (churchId) => {
 exports.getServants = async (churchId) => {
   const query = `
   SELECT
+    s.id,
     s.name,
     s.email,
     s.phone_number,
-    COUNT (DISTINCT sh.id) AS cuantity_sheeps_guide
+    (SELECT rs.name 
+     FROM services srv 
+     LEFT JOIN roles_servants rs ON srv.rol_servant_id = rs.id 
+     WHERE srv.servant_id = s.id 
+     GROUP BY rs.name 
+     ORDER BY COUNT(*) DESC 
+     LIMIT 1) AS usual_rol,
+    (SELECT e.date FROM events e
+      JOIN services srv ON e.id = srv.event_id
+      ORDER BY e.date DESC
+    ) AS last_service,
+    (SELECT c.name FROM courses c
+    JOIN church_courses chc ON c.id = chc.course_id
+    JOIN entity_courses ec ON chc.id = ec.course_id
+    WHERE ec.servant_id = s.id
+    ORDER BY ec.started_at DESC
+    LIMIT 1) AS last_course,
+    (SELECT status FROM entity_courses
+     WHERE servant_id = s.id
+     ORDER BY started_at DESC
+     LIMIT 1
+     )  as status_course,
+    COUNT (DISTINCT sh.id) AS cuantity_sheeps_guide    
   FROM servants s
   JOIN sheeps sh ON s.id = sh.guide_id
   WHERE s.church_id = $1
-  GROUP BY s.name,s.email,s.phone_number
+  GROUP BY s.name,s.email,s.phone_number,s.id,usual_rol
   `
   const result = await db.query(query, [churchId])
   if (result.rows.length === 0) {
