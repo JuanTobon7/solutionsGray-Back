@@ -111,7 +111,7 @@ exports.singIn = async (email, password) => {
 
     return user // Devolver el dato con el nuevo nombre
   } catch (e) {
-    if (process.env.NODE_ENV === 'develop') {
+    if (process.env.NODE_ENV === 'development') {
       console.log('error: ', e.message)
     }
   }
@@ -147,7 +147,7 @@ exports.createInvitationBoarding = async (email, inviterId, created, expires) =>
     const data = result.rows[0]
     return data
   } catch (e) {
-    if (process.env.NODE_ENV === 'develop') {
+    if (process.env.NODE_ENV === 'development') {
       console.log('error: ', e.message)
     }
   }
