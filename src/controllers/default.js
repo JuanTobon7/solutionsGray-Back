@@ -22,7 +22,7 @@ exports.sendLead = async (req, res) => {
     }
     res.status(200).send('Se ha guardado tu peticion, pronto te contactaremos')
   } catch (e) {
-    if (process.env.NODE_ENV === 'develop') {
+    if (process.env.NODE_ENV === 'development') {
       console.log(e.message)
     }
   }
