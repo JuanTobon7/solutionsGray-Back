@@ -3,11 +3,11 @@ const fetch = require('node-fetch')
 require('dotenv').config()
 
 const db = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT
+  user: process.env.DB_DEV_USER,
+  host: 'localhost',
+  database: process.env.DB_DEV_NAME,
+  password: process.env.DB_DEV_PASSWORD,
+  port: 5432
 })
 
 // Check database connection

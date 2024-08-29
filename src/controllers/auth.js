@@ -3,6 +3,18 @@ const moment = require('moment')
 const jwt = require('jwt-simple')
 const sendEmail = require('../services/sendEmail/email')
 
+async function createAccessToken (data, duration) {
+  const payload = {
+    sub: data.id,
+    rolName: data.rol_name,
+    iat: moment().format('X'),
+    exp: moment().add(duration, 'seconds').format('X'),
+    ouathId: process.env.SSR_CLIENT_ID
+  }
+  const token = jwt.encode(payload, process.env.JWT_SECRET, 'HS256')
+  return token
+}
+
 exports.refreshToken = async (req, res) => {
   try {
     const refreshToken = req.cookies.refresh_token
@@ -19,21 +31,16 @@ exports.refreshToken = async (req, res) => {
       return res.status(401).send({ message: 'El token ha expirado' })
     }
     const duration = 60 * 2 // 20 min
-    const payload = {
-      sub: result.userId,
-      rolName: result.rolName,
-      iat: moment().format('X'),
-      exp: moment().add(duration, 'seconds').format('X'),
-      ouathId: process.env.SSR_CLIENT_ID
-    }
-    const token = jwt.encode(payload, process.env.JWT_SECRET, 'HS256')
+    const accesToken = await createAccessToken({ id: result.userId, rolName: result.rolName }, duration)
+
     const durationRefresh = 60 * 60 * 24 * 3 // 3 días
     const newRefreshToken = await ouath2Services.createRefreshToken({
-      userId: payload.sub,
-      created: payload.iat,
+      userId: result.userId,
+      created: moment().format('X'),
       expires: durationRefresh
     })
-    res.cookie('access_token', token, {
+
+    res.cookie('access_token', accesToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: duration * 2 * 1000
@@ -55,11 +62,14 @@ exports.singUp = async (req, res) => {
   try {
     console.log('entramos a singUp ctrl')
 
-    const { cc, name, email, password, countryId, phoneNumber } = req.body
+    const { password } = req.body
+    const personId = req.newUser.id
     const churchId = req.newUser.church_id
-    console.log('this is churchId:', churchId)
+    console.log('this is the personId: ', personId)
+    console.log('this is the churchId: ', churchId)
+    console.log('this is the rol: ', req.newUser.rol_name)
     const rol = req.newUser.rol_name
-    if (!cc || !name || !email || !password || !countryId || !phoneNumber) {
+    if (!password) {
       const error = new Error('Faltan Datos')
       res.status(400).send({ message: error })
       return
@@ -72,7 +82,7 @@ exports.singUp = async (req, res) => {
       return
     }
     console.log('here here here here go go go')
-    const result = await ouath2Services.singUp({ cc, name, email, password, countryId, churchId, phoneNumber, rol })
+    const result = await ouath2Services.singUp({ personId, password, rol })
 
     if (!result) {
       res.status(500).send({ message: result })
@@ -87,6 +97,7 @@ exports.singUp = async (req, res) => {
 exports.sigIn = async (req, res) => {
   try {
     console.log('entro a singIn')
+    console.log('req.body: ', req.body)
     const { email, password } = req.body
     if (!email || !password) {
       const error = new Error('Datos faltantes')
@@ -98,26 +109,18 @@ exports.sigIn = async (req, res) => {
       res.status(401).send({ message: result.message })
       return
     }
-    const duration = 10 // 10 seg
-    const payload = {
-      sub: result.id,
-      rolName: result.rol_name,
-      iat: moment().format('X'),
-      exp: moment().add(duration, 'seconds').format('X'),
-      ouathId: process.env.SSR_CLIENT_ID
-    }
-    const token = jwt.encode(payload, process.env.JWT_SECRET, 'HS256')
+    const duration = 60 * 7 // 7 min
+    const accessToken = await createAccessToken({ id: result.id, rolName: result.rol_name }, duration)
     const durationRefresh = 60 * 60 * 24 * 27 // 27 días
     const refreshToken = await ouath2Services.createRefreshToken({
-      userId: payload.sub,
-      created: payload.iat,
+      userId: result.id,
+      created: moment().format('X'),
       expires: durationRefresh
     })
-    const durationToken = 60 * 10 // 10 minutos
-    res.cookie('access_token', token, {
+    res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: durationToken * 1000
+      maxAge: duration * 1000
     })
 
     res.cookie('refresh_token', refreshToken, {
@@ -125,9 +128,9 @@ exports.sigIn = async (req, res) => {
       secure: process.env.NODE_ENV === 'production',
       maxAge: durationRefresh * 1000
     })
-
+    console.log('result of singIn: ', result)
     const userData = {
-      name: result.name,
+      name: result.first_name + ' ' + result.last_name,
       email: result.email,
       rol: result.rol_name
     }
@@ -145,18 +148,19 @@ exports.sigIn = async (req, res) => {
 
 exports.createInvitationBoarding = async (req, res) => {
   try {
-    const { email } = req.body
+    const { personId, email } = req.body
     // Verificar si el email no está definido
     if (!email) {
       return res.status(400).send('No proporcionaste el email')
     }
-    const inviterName = req.user.name
     const duration = 60 * 60 * 24 * 27 // 27 días
     const created = moment().format('X')
     const expires = moment().add(duration, 'seconds').format('X')
     const inviterId = req.user.id
+    const inviterName = req.user.firstName + req.user.lastName
+
     console.log('Going into createInvitationBoarding')
-    const result = await ouath2Services.createInvitationBoarding(email, inviterId, created, expires)
+    const result = await ouath2Services.createInvitationBoarding(personId, inviterId, created, expires)
 
     if (result instanceof Error) {
       res.status(401).send({ message: result.message })
@@ -164,7 +168,7 @@ exports.createInvitationBoarding = async (req, res) => {
     }
     console.log('result of createInvitationBoarding: ', result)
     const payload = {
-      tokenId: result.id,
+      tokenId: result.personId,
       duration,
       created,
       expires,
@@ -218,12 +222,14 @@ exports.acceptInvitation = async (req, res) => {
 
 exports.verifyChurchLead = async (req, res) => {
   try {
-    const { email } = req.newUser
-    if (!email) {
-      res.status(400).send('No fue proporcionado ningún email')
+    console.log('verifyChurchLead')
+    console.log('req.newUser', req.newUser)
+    const { person_id: personId } = req.newUser
+    if (!personId) {
+      res.status(400).send('No tienes credenciales para estar aqui')
       return
     }
-    const result = await ouath2Services.verifyChurchLead(email)
+    const result = await ouath2Services.verifyChurchLead(personId)
     if (result instanceof Error) {
       res.status(401).send('No tienes ninguna peticion de afiliacion')
       return

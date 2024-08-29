@@ -25,13 +25,15 @@ module.exports = function (passport) {
   // user endpoints
   router.use(state)
   router.get('/basic-info-user', userController.basicInfo) // ok
-  router.post('/register-new-attends', defaultChurch.registerAttends) // ok
+  router.get('/worship-services', churchController.getWorshipServices) // ok
+  router.post('/register-new-attends', defaultController.registerAttends) // ok
   router.post('/enroll-servants-courses', churchController.enrollServantsCourses)
 
   // admin endpoints
   router.post('/register-sheeps', admin, defaultChurch.registerSheeps) // review okk but coninuos
   router.post('/register-visits', admin, defaultChurch.resgisterVisits) // review ok
   router.post('/enroll-sheeps-courses', admin, churchController.enrollSheepsCourses)
+  router.post('/save-people', admin, defaultController.savePeople) // ok
   router.get('/sheeps', admin, defaultChurch.getSheeps)
   router.get('/sheep/:id', admin, defaultChurch.getSheep)
   router.get('/my-sheeps', admin, defaultChurch.getMySheeps)
@@ -53,7 +55,7 @@ module.exports = function (passport) {
 
 async function invitateGuest (req, res, next) {
   if (!req.newUser) {
-    res.status(401).send('No tienes credenciales para estar aqui')
+    res.status(401).send('No tienes credenciales para estar aqui middleware')
     return
   }
   console.log('reqNewUser', req.newUser)
@@ -62,16 +64,16 @@ async function invitateGuest (req, res, next) {
 
 async function pastor (req, res, next) {
   console.log('req pastor: ', req.user)
-  if (!req.user || req.user.rolNaME !== 'Pastor') {
+  if (!req.user || req.user.rolName !== 'Pastor') {
     res.status(401).send('No tienes credenciales para estar aqui')
     return
   }
+  console.log('nos fuimos a la funcion')
   await next()
 }
 
 async function state (req, res, next) {
-  console.log(req.cookies)
-  console.log(req.tokenError)
+  console.log('in state')
   if (req.tokenError) {
     const statusToken = req.tokenError.message
     console.log('statusToken', statusToken)
@@ -93,6 +95,7 @@ async function admin (req, res, next) {
 }
 
 async function superAdmin (req, res, next) {
+  console.log('req superadmin: ', req.user)
   if (!req.user || req.user.rol_name === 'User' || req.user.rol_name === 'Admin') {
     console.log('funcion Superadmin', req.user)
     return res.status(401).send('No tienes los permisos here')

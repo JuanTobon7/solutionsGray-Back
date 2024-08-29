@@ -1,13 +1,14 @@
 const { Pool } = require('pg')
 const fetch = require('node-fetch')
 require('dotenv').config()
+const { v4: uuidv4 } = require('uuid')
 
 const db = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT
+  user: process.env.DB_DEV_USER,
+  host: 'localhost',
+  database: process.env.DB_DEV_NAME,
+  password: process.env.DB_DEV_PASSWORD,
+  port: 5432
 })
 
 // Check database connection
@@ -46,9 +47,10 @@ async function saveStatesToDB (states, countryId) {
         console.error(`Datos inválidos: iso2=${state.iso2}, name=${state.name}, countryId=${countryId}`)
         continue // Saltar este estado si los datos son inválidos
       }
+      const uuid = uuidv4()
       const result = await db.query(
-        'INSERT INTO states (id, name, country_id) VALUES ($1, $2, $3) ON CONFLICT (country_id, id) DO NOTHING RETURNING *;',
-        [state.iso2, state.name, countryId]
+        'INSERT INTO states (id, name,short_name,country_id) VALUES ($1, $2,$3,$4) RETURNING *;',
+        [uuid, state.name, state.iso2, countryId]
       )
       if (result.rows.length > 0) {
         console.log('Insert result:', result.rows)

@@ -1,39 +1,16 @@
 const serviceDefault = require('../../services/ministries/default')
 const moment = require('moment-timezone')
 
-exports.registerAttends = async (req, res) => {
-  try {
-    const { countryId, churchId, id: guideId } = req.user
-
-    console.log('ID del guía:', guideId)
-    const { cc, name, email, eventId } = req.body
-    if (!cc || !name || !eventId) {
-      res.status(400).send('Faltan Datos')
-      return
-    }
-    const result = await serviceDefault.registerAttends({ cc, name, email, eventId, countryId, churchId, guideId })
-    if (result instanceof Error) {
-      res.status(400).send({ message: result.message })
-      return
-    }
-
-    res.status(200).send(`La persona ${result.name} fue añadida exitosamente`)
-  } catch (e) {
-    console.log(e)
-    res.status(500).send('Error en el servidor', e)
-  }
-}
 // cambiar funcion para poder elegir a quien asignar la oveja
 exports.registerSheeps = async (req, res) => {
   try {
-    const { attendeeId, description } = req.body
-    const guideId = req.user.id
-    if (!attendeeId || !description) {
+    const { personId, description, guideId } = req.body
+    if (!personId || !description || !guideId) {
       res.status(400).send('Faltan datos para iniciar un proceso de acompañamiento con la persona en cuestion')
       return
     }
 
-    const result = await serviceDefault.registerSheep({ attendeeId, description, guideId })
+    const result = await serviceDefault.registerSheep({ personId, description, guideId })
 
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })
@@ -42,7 +19,7 @@ exports.registerSheeps = async (req, res) => {
     res.status(200).send('Se ha iniciado un proceso de acompañamiento con la persona inscrita')
   } catch (e) {
     console.log(e)
-    res.status(500).send('Ups algo fallo en el servidor', e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
 
@@ -64,7 +41,7 @@ exports.resgisterVisits = async (req, res) => {
     res.status(200).send('Se ha registrado exitosamente la visita a la oveja en cuestion')
   } catch (e) {
     console.log(e)
-    res.status(500).send('Ups algo fallo en el servidor', e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
 
@@ -84,7 +61,7 @@ exports.getSheeps = async (req, res) => {
     res.status(200).send(result)
   } catch (e) {
     console.log(e)
-    res.status(500).send('Ups algo fallo en el servidor', e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
 
@@ -105,7 +82,7 @@ exports.getSheep = async (req, res) => {
     res.status(200).send(result)
   } catch (e) {
     console.log(e)
-    res.status(500).send('Ups algo fallo en el servidor', e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
 
@@ -121,18 +98,16 @@ exports.getMySheeps = async (req, res) => {
     res.status(200).send(result)
   } catch (e) {
     console.log(e)
-    res.status(500).send('Ups algo fallo en el servidor', e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
 
 exports.getServants = async (req, res) => {
   try {
-    console.log('jere are coming')
     const { churchId } = req.user
     if (!churchId) {
       throw new Error('No se pudo acceder a las credenciales')
     }
-
     const result = await serviceDefault.getServants(churchId)
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })
@@ -141,6 +116,6 @@ exports.getServants = async (req, res) => {
     res.status(200).send(result)
   } catch (e) {
     console.log(e)
-    res.status(500).send('Ups algo fallo en el servidor', e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }

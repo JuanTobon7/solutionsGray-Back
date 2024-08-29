@@ -3,14 +3,15 @@ const moment = require('moment-timezone')
 
 exports.createChurches = async (req, res) => {
   try {
-    const { name, parentChurchId, address, stateId, countryId } = req.body
+    const { name, parentChurchId, address, stateId } = req.body
     const pastorId = req.user.id
-    if (!name || !address || !stateId || !countryId) {
+    console.log('pastorId', pastorId)
+    if (!name || !address || !stateId) {
       res.status(400).send('Datos Incompletos')
       return
     }
 
-    const result = await serviceChurch.createChurches({ name, parentChurchId, address, stateId, countryId, pastorId })
+    const result = await serviceChurch.createChurches({ name, parentChurchId, address, stateId, pastorId })
 
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })
@@ -29,32 +30,67 @@ exports.createChurches = async (req, res) => {
 
 exports.createWorshipServices = async (req, res) => {
   try {
-    const { name, date, typeEvent, userTimezone } = req.body
-    if (!name || !date || !typeEvent || !userTimezone) {
+    console.log('here create worship services')
+    console.log('data received', req.body)
+
+    const { name, sermonTittle, description, date, userTimezone } = req.body
+    if (!name || !sermonTittle || !description || !date || !userTimezone) {
       res.status(400).send('Datos incompletos')
       return
     }
+
     const churchId = req.user.churchId
+
+    // Convierte la fecha proporcionada a la zona horaria del usuario
     const eventDateInUserTZ = moment.tz(date, userTimezone)
+
+    // Calcula la fecha actual en la zona horaria del usuario
     const currentDateInUserTZ = moment.tz(new Date(), userTimezone)
 
+    // Calcula la diferencia en días entre la fecha del culto y la fecha actual
     const daysDifference = eventDateInUserTZ.diff(currentDateInUserTZ, 'days')
 
     if (daysDifference < 4) {
-      res.status(400).send({ message: 'No se pueden programar culto con menos de 4 dias de anterioridad' })
+      res.status(400).send({ message: 'No se pueden programar cultos con menos de 4 días de anterioridad' })
       return
     }
-    // para guardar la fecha en base a la zona horaria del usuario y no del server
-    const dateWhorship = eventDateInUserTZ.format('YYYY-MM-DD HH:mm')
-    const result = await serviceChurch.createWorshipServices({ name, dateWhorship, churchId, typeEvent })
+
+    // Guarda la fecha en la base de datos en formato UTC para evitar problemas de zona horaria
+    const dateWhorship = eventDateInUserTZ.utc().format('YYYY-MM-DD HH:mm')
+
+    console.log('dateWhorship', dateWhorship)
+
+    const result = await serviceChurch.createWorshipServices({
+      name,
+      sermonTittle,
+      dateWhorship,
+      churchId,
+      description
+    })
+
     if (result instanceof Error) {
-      res.status(400).send({ message: `Ups hubo un error ${result.message}` })
+      res.status(400).send({ message: `Ups, hubo un error: ${result.message}` })
       return
     }
-    // aqui es necesario enviar por correo el hecho de que se creo un culto
+
+    // Enviar un correo electrónico para notificar la creación del culto (implementar esto)
     res.status(200).send({ message: 'Culto creado exitosamente' })
   } catch (e) {
-    res.status(500).send({ message: `Ups hubo un error ${e}` })
+    res.status(500).send({ message: `Ups, hubo un error: ${e}` })
+  }
+}
+exports.getWorshipServices = async (req, res) => {
+  try {
+    const churchId = req.user.churchId
+    const result = await serviceChurch.getWorshipServices(churchId)
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+
+    res.status(200).send(result)
+  } catch (e) {
+    res.status(500).send({ message: e })
   }
 }
 
@@ -66,7 +102,7 @@ exports.createRolesServants = async (req, res) => {
       res.status(400).send({ message: 'Faltan Datos' })
       return
     }
-
+    console.log('name', name)
     const result = await serviceChurch.createRolesServants(name)
     if (result instanceof Error) {
       res.status(400).send({ message: `Ups algo paso ${result.message}` })
@@ -102,7 +138,7 @@ exports.assignServices = async (req, res) => {
     // // }
     res.status(200).send({ message: 'el servicio fue asignado correctamente' })
   } catch (e) {
-    res.status(500).send('Ups algo fallo en el servidor', e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
 
@@ -123,7 +159,7 @@ exports.registerCourses = async (req, res) => {
     res.status(200).send(`Se ha registrado exitosamente el curso ${name}`)
   } catch (e) {
     console.log(e)
-    res.status(500).send('Ups algo fallo en el servidor', e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
 
@@ -145,7 +181,7 @@ exports.assignCourses = async (req, res) => {
     res.status(200).send('Se ha asignado exitosamente este curso')
   } catch (e) {
     console.log(e)
-    res.status(500).send('Ups algo fallo en el servidor', e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
 
@@ -169,7 +205,7 @@ exports.enrollServantsCourses = async (req, res) => {
     res.status(200).send('Haz sido inscrito exitosamente a este curso')
   } catch (e) {
     console.log(e)
-    res.status(500).send('Ups algo fallo en el servidor', e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
 
@@ -193,7 +229,7 @@ exports.enrollSheepsCourses = async (req, res) => {
     res.status(200).send('Se asigno correctamente la oveja a este curso')
   } catch (e) {
     console.log(e)
-    res.status(500).send('Ups algo fallo en el servidor', e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
 
@@ -203,6 +239,7 @@ exports.getChurchInfo = async (req, res) => {
     if (!churchId) {
       throw new Error('No podemos hallar la informacion de la iglesia a la que asistes')
     }
+    console.log('churchId', churchId)
     const result = await serviceChurch.getChurchInfo(churchId)
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })
@@ -212,7 +249,7 @@ exports.getChurchInfo = async (req, res) => {
     res.status(200).send(result)
   } catch (e) {
     console.log('error:', e)
-    res.status(500).send('Ups algo fallo en el servidor', e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
 
