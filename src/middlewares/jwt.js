@@ -11,7 +11,9 @@ module.exports = async function (req, res, next) {
   }
   if (token) {
     try {
+      console.log('token in jwt inspection', token)
       const payload = jwt.decode(token, process.env.JWT_SECRET)
+      console.log('payload', payload)
       req.token = token
       console.log(payload)
       const dataUser = await user.findById(payload.sub)
@@ -22,6 +24,7 @@ module.exports = async function (req, res, next) {
       req.user = dataUser
       console.log('here here here req.user', req.user)
     } catch (err) {
+      console.log('err', err)
       res.clearCookie('access_token')
       req.tokenError = err
     }

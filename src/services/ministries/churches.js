@@ -8,12 +8,12 @@ exports.createChurches = async (data) => {
     result = await db.query('SELECT * FROM churches WHERE id = $1', [churchId])
   } while (result.rows.length > 0)
   query = `
-        INSERT INTO churches VALUES ($1,$2,$3,$4,(
-        SELECT id FROM states WHERE id = $5 AND country_id = $6),
-        $6) 
+        INSERT INTO churches (id,name,parent_church_id,address,state_id) 
+        VALUES ($1,$2,$3,$4,$5)
         RETURNING *;`
-  result = await db.query(query, [churchId, data.name, data.parentChurchId, data.address, data.stateId, data.countryId])
-
+  console.log(churchId)
+  result = await db.query(query, [churchId, data.name, data.parentChurchId, data.address, data.stateId])
+  const resultChurch = result.rows[0]
   if (result.rows.length === 0) {
     return new Error('Ups algo paso al registrar tu iglesia')
   }
@@ -22,7 +22,7 @@ exports.createChurches = async (data) => {
   result = await db.query(query, [data.pastorId, churchId])
 
   const updateQuery = `
-        UPDATE servants 
+        UPDATE people 
         SET church_id = $1 
         WHERE id = $2
         RETURNING *;
@@ -33,7 +33,7 @@ exports.createChurches = async (data) => {
     return new Error('Ups algo paso al actualizar el church_id en la tabla servants')
   }
 
-  return result.rows[0]
+  return resultChurch
 }
 
 exports.createWorshipServices = async (data) => {
@@ -43,8 +43,9 @@ exports.createWorshipServices = async (data) => {
     query = 'SELECT * FROM events WHERE id = $1;'
     result = await db.query(query, [id])
   } while (result.rows.length > 0)
-  query = 'INSERT INTO events (id,name,date,church_id) VALUES ($1,$2,$3,$4) RETURNING *;'
-  result = await db.query(query, [id, data.name, data.dateWhorship, data.churchId])
+  query = 'INSERT INTO events (id,name,date,church_id,sermon_tittle,description) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *;'
+  console.log('data in createWorshipServices: ', data)
+  result = await db.query(query, [id, data.name, data.dateWhorship, data.churchId, data.sermonTittle, data.description])
   if (result.rows.length === 0) {
     return new Error('Ups algo fallo al guardar el culto')
   }
@@ -52,21 +53,39 @@ exports.createWorshipServices = async (data) => {
   return result.rows[0]
 }
 
-exports.createRolesServants = async (name) => {
-  let query, result, id
-  do {
-    id = uuidv4()
-    query = 'SELECT * FROM roles_servants WHERE id = $1;'
-    result = await db.query(query, [id])
-  } while (result.rows.length > 0)
-  query = 'INSERT INTO roles_servants (id,name) VALUES ($1,$2) RETURNING *;'
-  result = await db.query(query, [id, name])
-
-  if (result.rowCount.length === 0) {
-    return new Error('Ups algo fallo al guardar el rol para servidor')
+exports.getWorshipServices = async (churchId) => {
+  const query = 'SELECT * FROM events WHERE church_id = $1;'
+  const result = await db.query(query, [churchId])
+  if (result.rows.length === 0) {
+    return new Error('No hay cultos programados')
   }
+  return result.rows
+}
 
-  return result.rows[0]
+exports.createRolesServants = async (name) => {
+  try {
+    console.log('name in create roles servants: ', name)
+    let query, result, id
+    do {
+      id = uuidv4()
+      console.log('id in create roles servants: ', id)
+      query = 'SELECT * FROM roles_services WHERE id = $1;'
+      result = await db.query(query, [id])
+      console.log('result in create roles servants: ', result)
+    } while (result.rows.length > 0)
+    console.log('id in create roles servants: ', id)
+    query = 'INSERT INTO roles_services (id,name) VALUES ($1,$2) RETURNING *;'
+    result = await db.query(query, [id, name])
+    console.log('result in create roles servants: ', result)
+    if (result.rowCount.length === 0) {
+      return new Error('Ups algo fallo al guardar el rol para servidor')
+    }
+
+    return result.rows[0]
+  } catch (e) {
+    console.log(e)
+    return e
+  }
 }
 
 exports.assignServices = async (data) => {
@@ -153,6 +172,7 @@ exports.assignServices = async (data) => {
 
 exports.registerCourses = async (data) => {
   let id, query, result
+  console.log('data: ', data)
   do {
     id = uuidv4()
     query = 'SELECT * FROM courses WHERE id = $1;'
@@ -161,7 +181,7 @@ exports.registerCourses = async (data) => {
 
   query = 'INSERT INTO courses (id,name,publisher,description) VALUES ($1,$2,$3,$4) RETURNING *;'
   result = await db.query(query, [id, data.name, data.publisher, data.description])
-
+  console.log('result: ', result)
   if (result.rows.length === 0) {
     return new Error('Ups algo paso al registrar el curso')
   }
@@ -223,27 +243,28 @@ exports.enrollCourses = async (data) => {
 exports.getChurchInfo = async (churchId) => {
   console.log(`churchId: ${churchId}`)
   const query = `
-    SELECT
-    ch.name,
-    ch.address,
-    ch.state_id AS stateId,
-    ch.country_id AS countryId,
-    COUNT(DISTINCT s.id) AS quantityServants,
-    COUNT(DISTINCT sh.id) AS quantitySheeps,
-    COUNT(DISTINCT g.id) AS quantityGroups
+     SELECT 
+        ch.name,
+        ch.address,
+        ch.state_id AS stateId,
+        COUNT(DISTINCT g.id) AS quantityGroups,
+        SUM(CASE WHEN tp.name = 'Invitado' THEN 1 ELSE 0 END) AS countInvitado,
+        SUM(CASE WHEN tp.name = 'Usuario' THEN 1 ELSE 0 END) AS countUsuario,
+        SUM(CASE WHEN tp.name = 'Nuevo' THEN 1 ELSE 0 END) AS countNuevo,
+        SUM(CASE WHEN tp.name = 'Oveja' THEN 1 ELSE 0 END) AS countOveja
     FROM churches ch
-    LEFT JOIN servants s ON ch.id = s.church_id
-    LEFT JOIN new_attendees att ON att.church_id = ch.id
-    LEFT JOIN sheeps sh ON sh.attendee_id = att.id
+    LEFT JOIN people p ON ch.id = p.church_id
     LEFT JOIN group_churches g ON ch.id = g.church_id
+    LEFT JOIN types_people tp ON p.type_person_id = tp.id
     WHERE ch.id = $1
-    GROUP BY ch.name, ch.address, ch.state_id, ch.country_id;
+    GROUP BY ch.name, ch.address, ch.state_id;
 
   `
   const result = await db.query(query, [churchId])
   if (result.rows.length === 0) {
     return new Error('No hay informacion que mostrar')
   }
+  console.log('resultado de church', result.rows[0])
   return result.rows[0]
 }
 

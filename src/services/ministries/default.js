@@ -30,19 +30,20 @@ exports.registerAttends = async (data) => {
 }
 
 exports.registerSheep = async (data) => {
-  let id, query, result
-  do {
-    id = uuidv4()
-    query = `
-            SELECT * FROM sheeps WHERE id = $1;
+  let query, result
+  query = `
+            SELECT * FROM sheeps WHERE person_id = $1;
         `
-    result = await db.query(query, [id])
-  } while (result.rows.length > 0)
-
-  query = ` INSERT INTO sheeps (id,attendee_id,description,guide_id)
-            VALUES ($1,$2,$3,$4) RETURNING *;
+  result = await db.query(query, [data.personId])
+  if (result.rows.length > 0) {
+    return new Error('Esta persona ya ha sido registrada como oveja')
+  }
+  query = 'UPDATE people SET type_person_id = (SELECT id FROM types_people WHERE name = \'Oveja\') WHERE id = $1;'
+  result = await db.query(query, [data.personId])
+  query = ` INSERT INTO sheeps (person_id,description,guide_id)
+            VALUES ($1,$2,$3) RETURNING *;
         `
-  result = await db.query(query, [id, data.attendeeId, data.description, data.guideId])
+  result = await db.query(query, [data.personId, data.description, data.guideId])
 
   if (result.rows.length === 0) {
     return new Error('ups algo fallo al registrar a la persona en nuestra base de datos')
@@ -62,7 +63,7 @@ exports.resgisterVisits = async (data) => {
     result = await db.query(query, [id])
   } while (result.rows.length > 0)
 
-  query = 'SELECT visit_date as visit_date FROM  sheep_visits s WHERE sheep_id = $1 ORDER BY DATE(visit_date) DESC LIMIT 1;'
+  query = 'SELECT visit_date FROM  sheep_visits s WHERE sheep_id = $1 ORDER BY DATE(visit_date) DESC LIMIT 1;'
   result = await db.query(query, [data.sheepId])
 
   if (result.rows.length !== 0) {
@@ -86,53 +87,93 @@ exports.resgisterVisits = async (data) => {
 }
 
 exports.getSheeps = async (churchId) => {
+  console.log('churchId in getSheeps', churchId)
+  /** *
+   * Fecha de inicio
+   * Status
+   * id de la persona - oveja
+   * nombre de la persona
+   * email de la persona
+   * ultima visita
+   * cantidad de visitas
+   * descripcion
+   * guia a cargo
+   * ***/
   const query = `
-    SELECT
-      sh.id,
+    SELECT 
+      p.id,
+      p.first_name,
+      p.last_name,
+      p.email,
+      p.phone,
       sh.status,
-      e.date AS arrival_date,
       sh.description,
-      sh.guide_id AS guideID,
-      att.name,
-      att.email,
+      sh.guide_id,
+      COUNT(sv.id) AS cuantity_visits,
       (SELECT sv2.visit_date
-       FROM sheep_visits sv2
-       WHERE sv2.sheep_id = sh.id
+       FROM sheeps_visits sv2
+       WHERE sv2.sheep_id = sh.person_id
        ORDER BY sv2.visit_date DESC
        LIMIT 1) AS last_visit,
-      COUNT(sv.id) AS quantity_visits
-    FROM new_attendees att
-    JOIN sheeps sh ON att.id = sh.attendee_id
-    JOIN sheep_visits sv ON sh.id = sv.sheep_id
-    JOIN events e ON att.event_id = e.id
-    WHERE att.church_id = $1
-    GROUP BY sh.id, sh.status, e.date, sh.description, sh.guide_id, att.name, att.email
+       (SELECT sv2.visit_date
+       FROM sheeps_visits sv2
+       WHERE sv2.sheep_id = sh.person_id
+       ORDER BY sv2.visit_date ASC
+       LIMIT 1) AS arrival_date
+    FROM people p
+    JOIN sheeps sh ON p.id = sh.person_id
+    LEFT JOIN sheeps_visits sv ON sh.person_id = sv.sheep_id
+    WHERE p.church_id = $1
+    GROUP BY p.id, p.first_name, p.last_name, p.email, p.phone, sh.status, sh.description, sh.guide_id, sv.visit_date,last_visit,arrival_date
+
   `
+  console.log('query', query)
   const result = await db.query(query, [churchId])
+  console.log('result', result)
   if (result.rows.length === 0) {
     return new Error('Ups no hay ovejas por mostrar')
   }
+  console.log('result', result.rows)
   return result.rows
 }
 
 exports.getSheep = async (data) => {
+  /**
+   * Fecha de primera visita
+   * Status
+   * id de la persona - oveja
+   * nombre de la persona
+   * email de la persona
+   * ultima visita
+   * cantidad de visitas
+   * descripcion
+   * * */
   const query = `
     SELECT 
-      sh.id,
+      p.id,
+      p.first_name,
+      p.last_name,
+      p.email,
+      p.phone,
       sh.status,
-      e.date AS arrival_date,
-      sv.description,
-      sh.guide_id AS guideID,
-      sv.visit_date AS last_visit,
-      att.name,
-      att.email,
-      COUNT(sv.id) AS cuantity_visits
-    FROM new_attendees att    
-    JOIN sheeps sh ON att.id = sh.attendee_id
-    JOIN sheep_visits sv ON sh.id = sv.sheep_id
-    JOIN events e ON att.event_id = e.id
-    WHERE att.church_id = $1 AND sh.id = $2
-    GROUP BY sh.id,sh.status,e.date,sh.description,sh.guide_id,att.name,att.email,sv.description,sv.visit_date
+      sh.description,
+      sh.guide_id,
+      COUNT(sv.id) AS cuantity_visits,
+      (SELECT sv2.visit_date
+       FROM sheeps_visits sv2
+       WHERE sv2.sheep_id = sh.person_id
+       ORDER BY sv2.visit_date DESC
+       LIMIT 1) AS last_visit,
+       (SELECT sv2.visit_date
+      FROM sheeps_visits sv2
+      WHERE sv2.sheep_id = sh.person_id
+      ORDER BY sv2.visit_date ASC
+      LIMIT 1) AS arrival_date
+    FROM people p
+    JOIN sheeps sh ON p.id = sh.person_id
+    LEFT JOIN sheeps_visits sv ON sh.person_id = sv.sheep_id
+    WHERE p.church_id = $1 AND sh.person_id = $2
+    GROUP BY p.id, p.first_name, p.last_name, p.email, p.phone, sh.status, sh.description, sh.guide_id, sv.visit_date,last_visit,arrival_date
   `
   const result = await db.query(query, [data.churchId, data.id])
 
@@ -145,26 +186,31 @@ exports.getSheep = async (data) => {
 
 exports.getMySheeps = async (data) => {
   const query = `
-    SELECT
-      sh.id,
+     SELECT 
+      p.id,
+      p.first_name,
+      p.last_name,
+      p.email,
+      p.phone,
       sh.status,
-      e.date AS arrival_date,
       sh.description,
-      sh.guide_id AS guideID,
-      att.name,
-      att.email,
+      sh.guide_id,
+      COUNT(sv.id) AS cuantity_visits,
       (SELECT sv2.visit_date
-       FROM sheep_visits sv2
-       WHERE sv2.sheep_id = sh.id
+       FROM sheeps_visits sv2
+       WHERE sv2.sheep_id = sh.person_id
        ORDER BY sv2.visit_date DESC
        LIMIT 1) AS last_visit,
-      COUNT(sv.id) AS quantity_visits
-    FROM new_attendees att
-    JOIN sheeps sh ON att.id = sh.attendee_id
-    JOIN sheep_visits sv ON sh.id = sv.sheep_id
-    JOIN events e ON att.event_id = e.id
-    WHERE att.church_id = $1 AND sh.guide_id = $2
-    GROUP BY sh.id, sh.status, e.date, sh.description, sh.guide_id, att.name, att.email
+       (SELECT sv2.visit_date
+       FROM sheeps_visits sv2
+       WHERE sv2.sheep_id = sh.person_id
+       ORDER BY sv2.visit_date ASC
+       LIMIT 1) AS arrival_date
+    FROM people p
+    JOIN sheeps sh ON p.id = sh.person_id
+    LEFT JOIN sheeps_visits sv ON sh.person_id = sv.sheep_id
+    WHERE p.church_id = $1 AND sh.guide_id = $2
+    GROUP BY p.id, p.first_name, p.last_name, p.email, p.phone, sh.status, sh.description, sh.guide_id, sv.visit_date,last_visit,arrival_date
   `
   const result = await db.query(query, [data.churchId, data.id])
   if (result.rows.length === 0) {
@@ -175,38 +221,46 @@ exports.getMySheeps = async (data) => {
 
 exports.getServants = async (churchId) => {
   const query = `
-  SELECT
-    s.id,
-    s.name,
-    s.email,
-    s.phone_number,
-    (SELECT rs.name 
-     FROM services srv 
-     LEFT JOIN roles_servants rs ON srv.rol_servant_id = rs.id 
-     WHERE srv.servant_id = s.id 
-     GROUP BY rs.name 
-     ORDER BY COUNT(*) DESC 
-     LIMIT 1) AS usual_rol,
-    (SELECT e.date FROM events e
-      JOIN services srv ON e.id = srv.event_id
-      ORDER BY e.date DESC
-    ) AS last_service,
-    (SELECT c.name FROM courses c
-    JOIN church_courses chc ON c.id = chc.course_id
-    JOIN entity_courses ec ON chc.id = ec.course_id
-    WHERE ec.servant_id = s.id
-    ORDER BY ec.started_at DESC
-    LIMIT 1) AS last_course,
-    (SELECT status FROM entity_courses
-     WHERE servant_id = s.id
-     ORDER BY started_at DESC
-     LIMIT 1
-     )  as status_course,
-    COUNT (DISTINCT sh.id) AS cuantity_sheeps_guide    
-  FROM servants s
-  JOIN sheeps sh ON s.id = sh.guide_id
-  WHERE s.church_id = $1
-  GROUP BY s.name,s.email,s.phone_number,s.id,usual_rol
+  SELECT 
+  p.id,
+  p.first_name,
+  p.last_name,
+  p.email,
+  p.phone,
+  (SELECT rs.name
+   FROM services srv
+   LEFT JOIN roles_services rs ON srv.rol_servant_id = rs.id
+   WHERE srv.servant_id = p.id
+   GROUP BY rs.name
+   ORDER BY COUNT(*) DESC
+   LIMIT 1) AS usual_rol,
+  (SELECT e.date 
+   FROM events e
+   JOIN services srv ON e.id = srv.event_id
+   WHERE srv.servant_id = p.id
+   ORDER BY e.date DESC
+   LIMIT 1) AS last_service,
+  (SELECT c.name 
+   FROM courses c
+   JOIN church_courses chc ON c.id = chc.course_id
+   JOIN entity_courses ec ON chc.id = ec.course_id
+   WHERE ec.student_id = p.id
+   ORDER BY ec.started_at DESC
+   LIMIT 1) AS last_course,
+  (SELECT status 
+   FROM entity_courses
+   WHERE person_id = p.id
+   ORDER BY started_at DESC
+   LIMIT 1) AS status_course,
+  COUNT(DISTINCT sh.person_id) AS cuantity_sheeps_guide
+FROM 
+  people p
+JOIN 
+  sheeps sh ON p.id = sh.guide_id
+WHERE 
+  p.church_id = $1
+GROUP BY 
+  p.id, p.first_name, p.last_name, p.email, p.phone, usual_rol, last_service, last_course, status_course;
   `
   const result = await db.query(query, [churchId])
   if (result.rows.length === 0) {

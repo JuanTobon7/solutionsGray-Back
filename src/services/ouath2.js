@@ -3,15 +3,15 @@ const bcrypt = require('bcrypt')
 const { v4: uuidv4 } = require('uuid')
 
 exports.verifyInvitationsLead = async (id) => {
-  console.log('id: ', id)
+  console.log('id in verifyInvitation and Lead: ', id)
   const query = `
         SELECT 'in_invitations' AS source
         FROM invitations
-        WHERE id = $1
+        WHERE person_id = $1
         UNION ALL
         SELECT 'in_leads_pastor_churches' AS source
-        FROM leads_pastor_churches
-        WHERE id = $1;
+        FROM leads
+        WHERE person_id = $1;
 
     `
   const result = await db.query(query, [id])
@@ -33,13 +33,15 @@ exports.getInfoFromValidToken = async (rtoken) => {
   }
   const query = `
         SELECT 
-        s.id,
-        s.name,
+        p.id,
+        p.first_name,
+        p.last_name,
         rt.expires_at,
         r.name as rol_name
-        FROM refresh_token rt
-        LEFT JOIN servants s ON s.id = rt.user_id
-        LEFT JOIN roles_administratives r ON r.id = s.rol_adm
+        FROM refresh_tokens rt
+        LEFT JOIN users s ON s.person_id = rt.user_id
+        LEFT JOIN people p ON p.id = s.person_id
+        LEFT JOIN user_role r ON r.id = s.rol_user_id
         WHERE rt.id = $1;
     `
   const result = await db.query(query, [rtoken])
@@ -55,29 +57,20 @@ exports.getInfoFromValidToken = async (rtoken) => {
 }
 
 exports.singUp = async (data) => {
-  let id, result
-  do {
-    id = uuidv4()
-    result = await db.query('SELECT * FROM servants WHERE id = $1', [id])
-  } while (result.length > 0)
-
-  const query = `
-        INSERT INTO servants (id, cc, name, email, password, country_id, rol_adm,church_id, phone_number)
-        VALUES ($1, $2, $3, $4, $5, $6,(SELECT id FROM roles_administratives WHERE name = $7), $8,$9)
+  let query
+  query = 'UPDATE people SET type_person_id = (SELECT id FROM type_person WHERE name LIKE \'Usuario\') WHERE id = $1;'
+  await db.query(query, [data.personId])
+  query = `
+        INSERT INTO users (person_id, password,rol_user_id)
+        VALUES ($1, $2,(SELECT id FROM user_role WHERE name LIKE $3))
         RETURNING *;
       `
   const salt = await bcrypt.genSalt(12)
   const hashedPassword = await bcrypt.hash(data.password, salt)
-  result = await db.query(query, [
-    id,
-    data.cc,
-    data.name,
-    data.email,
+  const result = await db.query(query, [
+    data.personId,
     hashedPassword,
-    data.countryId,
-    data.rol,
-    data.churchId,
-    data.phoneNumber
+    data.rol
   ])
   if (result.rows.length === 0) {
     const error = new Error('Error en la Query')
@@ -89,10 +82,13 @@ exports.singUp = async (data) => {
 
 exports.singIn = async (email, password) => {
   try {
+    console.log('email: ', email)
+    console.log('password: ', password)
     const query = `
-            SELECT s.id as id,s.name,s.email,s.password,r.name as rol_name  FROM servants s
-            JOIN roles_administratives r ON r.id = s.rol_adm 
-            WHERE s.email = $1;
+            SELECT p.*,s.password,r.name as rol_name  FROM users s
+            LEFT JOIN people p ON p.id = s.person_id
+            JOIN user_role r ON r.id = s.rol_user_id
+            WHERE p.email = $1;
         `
     const result = await db.query(query, [email])
 
@@ -121,25 +117,24 @@ exports.createRefreshToken = async (data) => {
   let token, result
   do {
     token = uuidv4()
-    result = await db.query('SELECT * FROM refresh_token WHERE id = $1', [token])
+    result = await db.query('SELECT * FROM refresh_tokens WHERE id = $1', [token])
   } while (result.length > 0)
 
   const { userId, created, expires } = data
-  const query = 'INSERT INTO refresh_token VALUES($1,$2,$3,$4) RETURNING *;'
+  const query = 'INSERT INTO refresh_tokens VALUES($1,$2,$3,$4) RETURNING *;'
   result = db.query(query, [token, userId, created, expires])
 
   return token
 }
 
-exports.createInvitationBoarding = async (email, inviterId, created, expires) => {
+exports.createInvitationBoarding = async (personId, inviterId, created, expires) => {
   try {
-    const id = uuidv4()
     const query = `
-        INSERT INTO invitations (id, inviter_id, email, created_at, expires_at)
-        VALUES ($1, $2, $3, $4, $5) ON CONFLICT (email) DO NOTHING RETURNING *;
+        INSERT INTO invitations (person_id, inviter_id, created_at, expires_at)
+        VALUES ($1, $2, $3, $4, $5) ON CONFLICT (person_id) DO NOTHING RETURNING *;
     `
 
-    const result = await db.query(query, [id, inviterId, email, created, expires])
+    const result = await db.query(query, [personId, inviterId, created, expires])
 
     if (result.rows.length === 0) {
       return new Error('Error al Insertar Dato')
@@ -159,10 +154,10 @@ exports.getInvitationBoarding = async (tokenId) => {
   }
   console.log('here here')
   const query = `
-        SELECT i.* ,s.church_id
+        SELECT i.* ,p.first_name, p.last_name, p.email, p.phone_number,
         FROM invitations i
-        JOIN servants s ON s.id = i.inviter_id 
-        WHERE i.id = $1;
+        JOIN persons p ON p.id = i.person_id
+        WHERE i.person_id = $1;
     `
   const result = await db.query(query, [tokenId])
   console.log('aqui tamos')
@@ -174,7 +169,7 @@ exports.getInvitationBoarding = async (tokenId) => {
 }
 
 exports.acceptInvitation = async (email) => {
-  const query = 'UPDATE invitations SET status = \'accept\' WHERE email = $1 RETURNING *;'
+  const query = 'UPDATE invitations SET status = \'aceptado\' WHERE person_id = $1 RETURNING *;'
   const result = await db.query(query, [email])
   if (result.rows.length === 0) {
     return new Error('Ups no estabas en nuestra base de datos como invitado')
@@ -183,13 +178,14 @@ exports.acceptInvitation = async (email) => {
   return result.rows[0]
 }
 
-exports.verifyChurchLead = async (email) => {
-  if (!email) {
-    return new Error('Email no fue proporcionado')
+exports.verifyChurchLead = async (personId) => {
+  if (!personId) {
+    return new Error('No deberias estar aqui')
   }
-  console.log('email: ', email)
-  const query = 'SELECT * FROM leads_pastor_churches WHERE email = $1;'
-  const result = await db.query(query, [email])
+  const query = `SELECT l.*,p.* FROM leads l 
+  JOIN people p ON p.id = l.person_id
+  WHERE person_id = $1;`
+  const result = await db.query(query, [personId])
   if (result.rows.length === 0) {
     return new Error('Ups no te encuentras en nuestra base de datos, por favor contactanos')
   }
