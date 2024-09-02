@@ -31,6 +31,7 @@ module.exports = function (passport) {
 
   // admin endpoints
   router.post('/register-sheeps', admin, defaultChurch.registerSheeps) // review okk but coninuos
+  router.get('/get-people', admin, defaultChurch.getPeople) // ok
   router.post('/register-visits', admin, defaultChurch.resgisterVisits) // review ok
   router.post('/enroll-sheeps-courses', admin, churchController.enrollSheepsCourses)
   router.post('/save-people', admin, defaultController.savePeople) // ok
@@ -38,6 +39,7 @@ module.exports = function (passport) {
   router.get('/sheep/:id', admin, defaultChurch.getSheep)
   router.get('/my-sheeps', admin, defaultChurch.getMySheeps)
   // super admin endpoints
+  router.get('/types-worship-services', superAdmin, churchController.getTypesWorshipServices) // ok
   router.post('/create-worship-service', superAdmin, churchController.createWorshipServices) // ok
   router.post('/create-rol-servant', superAdmin, churchController.createRolesServants)// ok
   router.post('/assing-services', superAdmin, churchController.assignServices) // ok por correo falta hacer uno por whattsapp pero más adelante
