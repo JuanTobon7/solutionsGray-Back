@@ -268,3 +268,31 @@ GROUP BY
   }
   return result.rows
 }
+
+exports.getPeople = async (churchId) => {
+  console.log('churchId in getPeople', churchId)
+  const query = `
+ SELECT
+    p.id,
+    p.first_name,
+    p.last_name,
+    p.email,
+    p.phone,
+    (SELECT tp.name
+    FROM types_people tp
+    WHERE tp.id = p.type_person_id) AS type_person
+  FROM people p
+  WHERE p.church_id = $1
+    AND p.type_person_id  IN (
+      SELECT id FROM types_people 
+      WHERE name = 'Oveja' OR name = 'Usuario'
+    );
+
+  `
+  const result = await db.query(query, [churchId])
+  console.log('result', result.rows)
+  if (result.rows.length === 0) {
+    return new Error('Ups no hay personas por mostrar')
+  }
+  return result.rows
+}

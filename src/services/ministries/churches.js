@@ -36,6 +36,15 @@ exports.createChurches = async (data) => {
   return resultChurch
 }
 
+exports.getTypesWorshipServices = async () => {
+  const query = 'SELECT * FROM types_whorship_service;'
+  const result = await db.query(query)
+  if (result.rows.length === 0) {
+    return new Error('No hay tipos de cultos')
+  }
+  return result.rows
+}
+
 exports.createWorshipServices = async (data) => {
   let query, result, id
   do {
@@ -43,9 +52,9 @@ exports.createWorshipServices = async (data) => {
     query = 'SELECT * FROM events WHERE id = $1;'
     result = await db.query(query, [id])
   } while (result.rows.length > 0)
-  query = 'INSERT INTO events (id,name,date,church_id,sermon_tittle,description) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *;'
+  query = 'INSERT INTO events (id,worship_service_type_id,date,church_id,sermon_tittle,description) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *;'
   console.log('data in createWorshipServices: ', data)
-  result = await db.query(query, [id, data.name, data.dateWhorship, data.churchId, data.sermonTittle, data.description])
+  result = await db.query(query, [id, data.typeWorshipId, data.dateWhorship, data.churchId, data.sermonTittle, data.description])
   if (result.rows.length === 0) {
     return new Error('Ups algo fallo al guardar el culto')
   }

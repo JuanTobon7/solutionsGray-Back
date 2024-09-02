@@ -28,13 +28,27 @@ exports.createChurches = async (req, res) => {
 // Verificamos si el evento es al menos 4 días en el futuro
 // Creamos cultos en la iglesia, ojo son disintos a los eventos de los grupos
 
+exports.getTypesWorshipServices = async (req, res) => {
+  try {
+    const result = await serviceChurch.getTypesWorshipServices()
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+
+    res.status(200).send(result)
+  } catch (e) {
+    res.status(500).send({ message: e })
+  }
+}
+
 exports.createWorshipServices = async (req, res) => {
   try {
     console.log('here create worship services')
     console.log('data received', req.body)
 
-    const { name, sermonTittle, description, date, userTimezone } = req.body
-    if (!name || !sermonTittle || !description || !date || !userTimezone) {
+    const { typeWorshipId, sermonTittle, description, date, userTimezone } = req.body
+    if (!typeWorshipId || !sermonTittle || !description || !date || !userTimezone) {
       res.status(400).send('Datos incompletos')
       return
     }
@@ -61,7 +75,7 @@ exports.createWorshipServices = async (req, res) => {
     console.log('dateWhorship', dateWhorship)
 
     const result = await serviceChurch.createWorshipServices({
-      name,
+      typeWorshipId,
       sermonTittle,
       dateWhorship,
       churchId,
