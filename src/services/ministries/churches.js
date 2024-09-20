@@ -63,12 +63,37 @@ exports.createWorshipServices = async (data) => {
 }
 
 exports.getWorshipServices = async (churchId) => {
-  const query = 'SELECT * FROM events WHERE church_id = $1;'
+  const query = `
+    SELECT e.*,tws.name as worship_name FROM events e
+    LEFT JOIN types_whorship_service tws 
+    ON tws.id = e.worship_service_type_id
+    WHERE church_id = $1;`
   const result = await db.query(query, [churchId])
   if (result.rows.length === 0) {
     return new Error('No hay cultos programados')
   }
   return result.rows
+}
+
+exports.updateWorshipService = async (data, date) => {
+  console.log('In update service', data, ' and date', date)
+  const query = `
+  UPDATE events
+  SET date = $1,
+      sermon_tittle = $2,
+      description = $3,
+      worship_service_type_id = $4
+  WHERE id = $5
+  RETURNING *;
+`
+
+  const result = await db.query(query, [date, data.sermonTittle, data.description, data.typeWorshipId, data.id])
+
+  console.log('result in updateWorshipService: ', result.rows[0])
+  if (result.rows.length === 0) {
+    return new Error('No hay cultos programados')
+  }
+  return result.rows[0]
 }
 
 exports.createRolesServants = async (name) => {
@@ -99,6 +124,8 @@ exports.createRolesServants = async (name) => {
 
 exports.assignServices = async (data) => {
   try {
+    console.log('entramos a crear el servicio asignarlo con dato: ')
+    console.log(data)
     // Consulta para verificar la cuenta de servicios y roles
     const queryCheckServiceCount = `
             SELECT 
@@ -144,39 +171,59 @@ exports.assignServices = async (data) => {
       throw new Error('Ups algo fallo al asignar el servicio')
     }
 
-    // Consulta para obtener detalles del servicio asignado
-    const queryDetails = `
-            SELECT 
-                s.name AS servant_name,
-                s.email AS servant_email,
-                r.name AS rol_servant_name,
-                c.name AS church_name,
-                e.date,
-                e.name AS event_name
-            FROM 
-                servants s
-            JOIN 
-                services sr ON s.id = sr.servant_id
-            JOIN
-                roles_servants r ON r.id = sr.rol_servant_id
-            JOIN 
-                churches c ON c.id = s.church_id
-            JOIN 
-                events e ON e.id = sr.event_id
-            WHERE 
-                sr.id = $1;
-        `
-    const resultDetails = await db.query(queryDetails, [id])
-
-    if (resultDetails.rows.length === 0) {
-      throw new Error('Ups algo fallo al asignar el servicio')
-    }
-
-    return resultDetails.rows[0]
+    return resultInsert.rows
   } catch (e) {
     console.log(e)
     return e
   }
+}
+
+exports.updateAssignedService = async (data) => {
+  let query, result
+
+  query = 'SELECT * FROM services WHERE event_id = $1;'
+  result = await db.query(query, [data.eventId])
+
+  if (result.rows.length === 0) {
+    return new Error('No hay servicios asignados para este evento')
+  }
+
+  // accion para comparar y borrar los que no vengan en el array data...
+
+  // accion para actualizar las personas nuevas y las que ya estan en la base de datos
+  query = `
+    UPDATE services
+    SET servant_id = $1,
+        rol_servant_id = $2
+    WHERE id = $3 AND event_id = $4
+    RETURNING *;
+  `
+  result = await db.query(query, [data.servantId, data.rolServantId, data.id, data.eventId])
+  if (result.rows.length === 0) {
+    return new Error('No se pudo actualizar el servicio asignado')
+  }
+  return result.rows[0]
+}
+
+exports.getServices = async (eventId) => {
+  console.log('eventId in getServices: ', eventId)
+  const query = `
+    SELECT 
+    p.*,
+    rl.id as rol_id,
+    rl.name AS rol_servant
+    FROM services sr
+    JOIN roles_services rl ON sr.rol_servant_id = rl.id
+    JOIN people p ON sr.servant_id = p.id
+    JOIN events e ON sr.event_id = e.id
+    WHERE e.id = $1;
+  `
+  const result = await db.query(query, [eventId])
+  if (result.rows.length === 0) {
+    return new Error('No hay servicios asignados')
+  }
+  console.log('result in getServices here: ', result.rows)
+  return result.rows
 }
 
 exports.registerCourses = async (data) => {

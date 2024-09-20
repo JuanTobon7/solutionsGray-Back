@@ -296,3 +296,12 @@ exports.getPeople = async (churchId) => {
   }
   return result.rows
 }
+
+exports.getRolesServices = async () => {
+  const query = 'SELECT * FROM roles_services;'
+  const result = await db.query(query)
+  if (result.rows.length === 0) {
+    return new Error('Ups no hay servicios por mostrar')
+  }
+  return result.rows
+}

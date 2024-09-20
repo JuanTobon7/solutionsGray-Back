@@ -47,31 +47,34 @@ exports.createWorshipServices = async (req, res) => {
     console.log('here create worship services')
     console.log('data received', req.body)
 
-    const { typeWorshipId, sermonTittle, description, date, userTimezone } = req.body
-    if (!typeWorshipId || !sermonTittle || !description || !date || !userTimezone) {
+    const { typeWorshipId, sermonTittle, description, date, timeZone } = req.body
+
+    // Validar que todos los datos requeridos estén presentes
+    if (!typeWorshipId || !sermonTittle || !description || !date || !timeZone) {
+      console.log('Datos incompletos')
       res.status(400).send('Datos incompletos')
       return
     }
 
     const churchId = req.user.churchId
 
-    // Convierte la fecha proporcionada a la zona horaria del usuario
-    const eventDateInUserTZ = moment.tz(date, userTimezone)
-
-    // Calcula la fecha actual en la zona horaria del usuario
-    const currentDateInUserTZ = moment.tz(new Date(), userTimezone)
+    // No realizar ninguna conversión de zona horaria, simplemente usamos la fecha que proporcionó el usuario
+    const eventDateInUserTZ = moment(date) // Usar la fecha tal como la envió el usuario
+    const currentDateInUserTZ = moment().tz(timeZone) // Fecha actual en el servidor (no afecta al evento)
 
     // Calcula la diferencia en días entre la fecha del culto y la fecha actual
     const daysDifference = eventDateInUserTZ.diff(currentDateInUserTZ, 'days')
 
+    // Validar que la diferencia de días sea mayor o igual a 4
     if (daysDifference < 4) {
       res.status(400).send({ message: 'No se pueden programar cultos con menos de 4 días de anterioridad' })
       return
     }
 
-    // Guarda la fecha en la base de datos en formato UTC para evitar problemas de zona horaria
-    const dateWhorship = eventDateInUserTZ.utc().format('YYYY-MM-DD HH:mm')
+    // Almacenar la fecha tal cual la ingresó el usuario (sin convertir a UTC)
+    const dateWhorship = eventDateInUserTZ.format('YYYY-MM-DD HH:mm')
 
+    // Debug para verificar que se almacena la fecha correctamente
     console.log('dateWhorship', dateWhorship)
 
     const result = await serviceChurch.createWorshipServices({
@@ -88,7 +91,7 @@ exports.createWorshipServices = async (req, res) => {
     }
 
     // Enviar un correo electrónico para notificar la creación del culto (implementar esto)
-    res.status(200).send({ message: 'Culto creado exitosamente' })
+    res.status(200).send({ message: 'Culto creado exitosamente', id: result.id })
   } catch (e) {
     res.status(500).send({ message: `Ups, hubo un error: ${e}` })
   }
@@ -105,6 +108,32 @@ exports.getWorshipServices = async (req, res) => {
     res.status(200).send(result)
   } catch (e) {
     res.status(500).send({ message: e })
+  }
+}
+exports.updateWorshipService = async (req, res) => {
+  console.log('hello im in updateWorshipService')
+  const data = req.body
+  console.log('data', data)
+  if (!data) {
+    return res.status(400).json({ message: 'ID no proporcionado' })
+  }
+
+  // Ahora pasas el 'id' y 'data' al servicio para hacer la actualización
+  try {
+    const date = moment(data.date).format('YYYY-MM-DD HH:mm')
+    const result = await serviceChurch.updateWorshipService(data, date)
+    if (!result) {
+      return res.status(404).json({ message: 'Servicio no encontrado' })
+    }
+    res.status(200).json({
+      message: 'Servicio actualizado con éxito',
+      result
+    })
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error en el servidor',
+      error: error.message
+    })
   }
 }
 
@@ -131,32 +160,112 @@ exports.createRolesServants = async (req, res) => {
 // añadimos servicios o privilegios para los servidores de la iglesia
 exports.assignServices = async (req, res) => {
   try {
-    console.log('assing services controller begin')
-    const { servantId, rolServantId, eventId } = req.body
-
-    if (!rolServantId || !eventId || !servantId) {
+    console.log('assign services controller begin')
+    const servicesAssigned = req.body
+    console.log('servicesAssigned', servicesAssigned)
+    if (!servicesAssigned) {
       res.status(400).send('Ups faltan datos')
       return
     }
 
-    const result = await serviceChurch.assignServices({ rolServantId, eventId, servantId })
-    if (result instanceof Error) {
-      res.status(400).send({ message: result.message })
-      return
+    // Función para validar los campos obligatorios
+    const validateService = (servicesAssigned) => {
+      for (const service in servicesAssigned) {
+        console.log('im in the service loop', service)
+        if (!service.personId || !service.rolService) {
+          return null
+        }
+      }
+
+      return null
+    }
+    console.log('here')
+    // Función para asignar y validar un servicio
+    const processService = async (service) => {
+      console.log('service in processService: ', service)
+      const validationError = validateService(service)
+      if (validationError) {
+        console.log('y se cansan')
+        return { error: validationError }
+      }
+      console.log('Hasta aqui hemos llegado pasado el validateService')
+      console.log()
+      const data = { servantId: service.assignedServices[0].personId, rolServantId: service.assignedServices[0].rolService, eventId: service.id }
+      console.log('data to te assingService fun', data)
+      const result = await serviceChurch.assignServices(data)
+      console.log('vamos ahora aquiiiii con result', result)
+      if (result instanceof Error) {
+        return { error: result.message }
+      }
+
+      return { success: true }
     }
 
+    // Procesar si es un array o un único servicio
+    const services = Array.isArray(servicesAssigned) ? servicesAssigned : [servicesAssigned]
+
+    // Iterar sobre los servicios
+    for (const service of services) {
+      console.log('procedemos a validar si es cosas o q')
+      const { error } = await processService(service)
+      if (error) {
+        res.status(400).send({ message: error })
+        return
+      }
+    }
+
+    // se creara un curso
     // // const emailResult = await serviceEmail.sendAssignedService(result)
     // // if(emailResult instanceof Error){
     // //     throw emailResult.message
     // //     return
     // // }
-    res.status(200).send({ message: 'el servicio fue asignado correctamente' })
+
+    res.status(200).send({ message: 'El servicio fue asignado correctamente' })
   } catch (e) {
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
 
-// se creara un curso
+exports.updateAssignedService = async (req, res) => {
+  try {
+    const { assignedServices, id: eventId } = req.body
+    if (!assignedServices || !eventId) {
+      res.status(400).send('Ups faltan datos para esta operacion')
+      return
+    }
+    const result = await serviceChurch.updateAssignedService({ assignedServices, eventId })
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+    }
+    res.status(200).send({ message: 'Se ha actualizado correctamente el servicio' })
+  } catch (e) {
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
+
+exports.getServices = async (req, res) => {
+  try {
+    console.log('im here in getServices')
+    console.log('request', req.params)
+    const { id: eventId } = req.params
+    console.log('eventId', eventId)
+    if (!eventId) {
+      res.status(400).send('Faltan datos para esta operacion')
+      return
+    }
+    const result = await serviceChurch.getServices(eventId)
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+
+    res.status(200).send(result)
+  } catch (e) {
+    res.status(500).send({ message: e })
+  }
+}
+
 exports.registerCourses = async (req, res) => {
   try {
     const { name, publisher, description } = req.body
