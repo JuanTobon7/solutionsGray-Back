@@ -124,7 +124,7 @@ exports.getPeople = async (req, res) => {
   try {
     const { churchId } = req.user
     if (!churchId) {
-      throw new Error('No se pudo acceder a las credenciales')
+      res.status(400).send({ message: 'No se pudo acceder a las credenciales' })
     }
     const result = await serviceDefault.getPeople(churchId)
     if (result instanceof Error) {
@@ -142,6 +142,21 @@ exports.getRolesServices = async (req, res) => {
   try {
     console.log('coming here roles')
     const result = await serviceDefault.getRolesServices()
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send(result)
+  } catch (e) {
+    console.log(e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
+
+exports.getTypesPeople = async (req, res) => {
+  try {
+    console.log('coming here types')
+    const result = await serviceDefault.getTypesPeople()
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })
       return

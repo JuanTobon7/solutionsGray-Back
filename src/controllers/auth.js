@@ -148,7 +148,8 @@ exports.sigIn = async (req, res) => {
 
 exports.createInvitationBoarding = async (req, res) => {
   try {
-    const { personId, email } = req.body
+    const { id: personId, email } = req.body
+    console.log('req.body: ', req.body)
     // Verificar si el email no está definido
     if (!email) {
       return res.status(400).send('No proporcionaste el email')

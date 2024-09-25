@@ -39,22 +39,18 @@ module.exports = function (passport) {
   router.get('/sheeps', admin, defaultChurch.getSheeps)
   router.get('/sheep/:id', admin, defaultChurch.getSheep)
   router.get('/my-sheeps', admin, defaultChurch.getMySheeps)
+  router.get('/get-types-people', admin, defaultChurch.getTypesPeople)
   // super admin endpoints
   router.get('/types-worship-services', superAdmin, churchController.getTypesWorshipServices) // ok
   router.get('/assigned-services/:id', superAdmin, churchController.getServices) // ok
   router.post('/create-worship-service', superAdmin, churchController.createWorshipServices) // ok
   router.post('/create-rol-servant', superAdmin, churchController.createRolesServants)// ok
-  router.post('/assing-services', superAdmin, churchController.assignServices) // ok por correo falta hacer uno por whattsapp pero más adelante
-  router.put('/veo', async (req, res) => {
-    console.log(' in update-worship-services')
-    console.log('req.params', req.params)
-    console.log('req.query', req.query)
-    console.log('req.body', req.body)
-    console.log('supervisor', req.user)
-    res.send('hello')
-  })
+  router.post('/assing-services', superAdmin, churchController.asignServices) // ok por correo falta hacer uno por whattsapp pero más adelante
+  router.get('/get-types-people')
+
   router.put('/update-worship-services', superAdmin, churchController.updateWorshipService)
   router.put('/update-assign-service', superAdmin, churchController.updateAssignedService)
+  router.delete('/delete-assign-service/:serviceId', superAdmin, churchController.deleteAssignedService)
   router.post('/create-course', superAdmin, churchController.registerCourses)
   router.post('/assing-courses', superAdmin, churchController.assignCourses) // remember send an Email
   router.post('/invitation-boarding', superAdmin, controllerAuth.createInvitationBoarding) // ok

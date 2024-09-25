@@ -137,6 +137,17 @@ exports.getSheeps = async (churchId) => {
   return result.rows
 }
 
+exports.getTypesPeople = async () => {
+  const query = `
+    SELECT * FROM types_people
+   WHERE  name != 'Lead pastor' AND name != 'Usuario';`
+  const result = await db.query(query)
+  if (result.rows.length === 0) {
+    return new Error('Ups no hay tipos de personas por mostrar')
+  }
+  return result.rows
+}
+
 exports.getSheep = async (data) => {
   /**
    * Fecha de primera visita
@@ -278,15 +289,13 @@ exports.getPeople = async (churchId) => {
     p.last_name,
     p.email,
     p.phone,
-    (SELECT tp.name
-    FROM types_people tp
-    WHERE tp.id = p.type_person_id) AS type_person
+    tp.name AS type_person,
+    tp.id AS type_person_id
   FROM people p
+  JOIN types_people tp ON p.type_person_id = tp.id
   WHERE p.church_id = $1
-    AND p.type_person_id  IN (
-      SELECT id FROM types_people 
-      WHERE name = 'Oveja' OR name = 'Usuario'
-    );
+    AND p.id NOT IN (SELECT person_id FROM users)
+    ;
 
   `
   const result = await db.query(query, [churchId])

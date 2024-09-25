@@ -129,12 +129,19 @@ exports.createRefreshToken = async (data) => {
 
 exports.createInvitationBoarding = async (personId, inviterId, created, expires) => {
   try {
-    const query = `
-        INSERT INTO invitations (person_id, inviter_id, created_at, expires_at)
-        VALUES ($1, $2, $3, $4, $5) ON CONFLICT (person_id) DO NOTHING RETURNING *;
+    let query = `
+      SELECT * FROM invitations WHERE person_id = $1;
     `
-
-    const result = await db.query(query, [personId, inviterId, created, expires])
+    let result = await db.query(query, [personId])
+    if (result.rows.length > 0) {
+      return new Error('Ya tienes una invitacion pendiente')
+    }
+    query = `
+        INSERT INTO invitations (person_id, inviter_id, created_at, updated_at,status)
+        VALUES ($1, $2, $3, $4,$5) RETURNING *;        
+    `
+    const status = 'pendiente'
+    result = await db.query(query, [personId, inviterId, created, expires, status])
 
     if (result.rows.length === 0) {
       return new Error('Error al Insertar Dato')

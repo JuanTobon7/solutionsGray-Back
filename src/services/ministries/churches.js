@@ -140,8 +140,8 @@ exports.assignServices = async (data) => {
     if (resultCheckServiceCount.rows.length !== 0) {
       const serviceCount = parseInt(resultCheckServiceCount.rows[0].service_count, 10)
 
-      if (serviceCount >= 2) {
-        throw new Error('El servidor ya tiene más de dos servicios asignados para esta fecha')
+      if (serviceCount > 3) {
+        throw new Error('El servidor ya tiene más de tres servicios asignados para esta fecha')
       }
     }
 
@@ -180,10 +180,10 @@ exports.assignServices = async (data) => {
 
 exports.updateAssignedService = async (data) => {
   let query, result
-
+  console.log('data in updateAssignedService: ', data)
   query = 'SELECT * FROM services WHERE event_id = $1;'
   result = await db.query(query, [data.eventId])
-
+  console.log('result in updateAssignedService: ', result.rows)
   if (result.rows.length === 0) {
     return new Error('No hay servicios asignados para este evento')
   }
@@ -193,14 +193,24 @@ exports.updateAssignedService = async (data) => {
   // accion para actualizar las personas nuevas y las que ya estan en la base de datos
   query = `
     UPDATE services
-    SET servant_id = $1,
-        rol_servant_id = $2
-    WHERE id = $3 AND event_id = $4
+    SET  rol_servant_id = $2
+    WHERE id = $3 AND event_id = $4 AND servant_id = $1
     RETURNING *;
   `
-  result = await db.query(query, [data.servantId, data.rolServantId, data.id, data.eventId])
+  result = await db.query(query, [data.servantId, data.rolServantId, data.serviceId, data.eventId])
+  console.log('aqui toiii')
   if (result.rows.length === 0) {
     return new Error('No se pudo actualizar el servicio asignado')
+  }
+  console.log('result in updateAssignedService: ', result.rows[0])
+  return result.rows[0]
+}
+
+exports.deleteAssignedService = async (serviceId) => {
+  const query = 'DELETE FROM services WHERE id = $1 RETURNING *;'
+  const result = await db.query(query, [serviceId])
+  if (result.rows.length === 0) {
+    return new Error('No se pudo eliminar el servicio asignado')
   }
   return result.rows[0]
 }
@@ -208,8 +218,9 @@ exports.updateAssignedService = async (data) => {
 exports.getServices = async (eventId) => {
   console.log('eventId in getServices: ', eventId)
   const query = `
-    SELECT 
+    SELECT     
     p.*,
+    sr.id as service_id,
     rl.id as rol_id,
     rl.name AS rol_servant
     FROM services sr

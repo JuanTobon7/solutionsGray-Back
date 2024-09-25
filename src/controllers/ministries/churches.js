@@ -158,44 +158,51 @@ exports.createRolesServants = async (req, res) => {
   }
 }
 // añadimos servicios o privilegios para los servidores de la iglesia
-exports.assignServices = async (req, res) => {
+exports.asignServices = async (req, res) => {
   try {
-    console.log('assign services controller begin')
+    console.log('\n\n\n\nassign services controller begin\n\n\n\n\n\n')
     const servicesAssigned = req.body
-    console.log('servicesAssigned', servicesAssigned)
+    console.log('servicesAssigned', servicesAssigned, '\n\n\n\n\n\n')
     if (!servicesAssigned) {
       res.status(400).send('Ups faltan datos')
       return
     }
 
     // Función para validar los campos obligatorios
-    const validateService = (servicesAssigned) => {
-      for (const service in servicesAssigned) {
-        console.log('im in the service loop', service)
-        if (!service.personId || !service.rolService) {
-          return null
+    const validateService = (service) => {
+      for (const item of service.assignedServices) {
+        console.log('Validating service item', item)
+        if (!item.personId || !item.rolService) {
+          return 'Missing personId or rolService'
         }
       }
-
       return null
     }
+
     console.log('here')
     // Función para asignar y validar un servicio
     const processService = async (service) => {
       console.log('service in processService: ', service)
       const validationError = validateService(service)
       if (validationError) {
-        console.log('y se cansan')
+        console.log('Validation error encountered')
         return { error: validationError }
       }
-      console.log('Hasta aqui hemos llegado pasado el validateService')
-      console.log()
-      const data = { servantId: service.assignedServices[0].personId, rolServantId: service.assignedServices[0].rolService, eventId: service.id }
-      console.log('data to te assingService fun', data)
-      const result = await serviceChurch.assignServices(data)
-      console.log('vamos ahora aquiiiii con result', result)
-      if (result instanceof Error) {
-        return { error: result.message }
+      console.log('Passed validateService')
+
+      // Procesamos todos los servicios dentro de assignedServices
+      for (const assignedService of service.assignedServices) {
+        const data = {
+          servantId: assignedService.personId,
+          rolServantId: assignedService.rolService,
+          eventId: service.id
+        }
+        console.log('Data to assign service function', data)
+        const result = await serviceChurch.assignServices(data)
+        console.log('Result after assigning service', result)
+        if (result instanceof Error) {
+          return { error: result.message }
+        }
       }
 
       return { success: true }
@@ -203,23 +210,17 @@ exports.assignServices = async (req, res) => {
 
     // Procesar si es un array o un único servicio
     const services = Array.isArray(servicesAssigned) ? servicesAssigned : [servicesAssigned]
+    console.log('services process', services)
 
     // Iterar sobre los servicios
     for (const service of services) {
-      console.log('procedemos a validar si es cosas o q')
+      console.log('Validating and processing service')
       const { error } = await processService(service)
       if (error) {
         res.status(400).send({ message: error })
         return
       }
     }
-
-    // se creara un curso
-    // // const emailResult = await serviceEmail.sendAssignedService(result)
-    // // if(emailResult instanceof Error){
-    // //     throw emailResult.message
-    // //     return
-    // // }
 
     res.status(200).send({ message: 'El servicio fue asignado correctamente' })
   } catch (e) {
@@ -229,16 +230,38 @@ exports.assignServices = async (req, res) => {
 
 exports.updateAssignedService = async (req, res) => {
   try {
-    const { assignedServices, id: eventId } = req.body
-    if (!assignedServices || !eventId) {
+    console.log('Hi im update assinged service', req.body)
+    const { service, eventId, person, serviceId } = req.body
+    if (!service || !eventId || !person || !serviceId) {
       res.status(400).send('Ups faltan datos para esta operacion')
       return
     }
-    const result = await serviceChurch.updateAssignedService({ assignedServices, eventId })
+    console.log('assignedServices')
+    const result = await serviceChurch.updateAssignedService({ rolServantId: service.id, eventId, servantId: person.id, serviceId })
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })
+      return
     }
     res.status(200).send({ message: 'Se ha actualizado correctamente el servicio' })
+  } catch (e) {
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
+
+exports.deleteAssignedService = async (req, res) => {
+  try {
+    const { serviceId } = req.params
+    console.log('\n\n\nreq.body', req.params, '\n\n\n')
+    if (!serviceId) {
+      res.status(400).send('Ups faltan datos para esta operacion')
+      return
+    }
+    const result = await serviceChurch.deleteAssignedService(serviceId)
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send({ message: 'Se ha eliminado correctamente el servicio' })
   } catch (e) {
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
