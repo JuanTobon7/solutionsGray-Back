@@ -1,25 +1,6 @@
 const defaultServices = require('../services/default')
 const sendEmail = require('../services/sendEmail/email')
 
-async function savePeople (data) {
-  try {
-    const { stateId, email, firstName, lastName, cc, phone, rol, churchId } = data
-    if (!stateId || !email || !firstName || !lastName || !cc || !phone || !rol) {
-      return new Error('Datos faltantes')
-    }
-    const result = await defaultServices.savePeople({ stateId, email, firstName, lastName, cc, phone, rol, churchId })
-    console.log(result)
-    if (result instanceof Error) {
-      return result
-    }
-    return 'Se ha registrado a la persona con exito'
-  } catch (e) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(e.message)
-    }
-  }
-}
-
 exports.savePeople = async (req, res) => {
   try {
     const { stateId, email, firstName, lastName, cc, phone } = req.body
@@ -29,7 +10,7 @@ exports.savePeople = async (req, res) => {
       return
     }
     const churchId = req.user.churchId
-    const result = await savePeople({ stateId, email, firstName, lastName, cc, phone, rol, churchId })
+    const result = await defaultServices.savePeople({ stateId, email, firstName, lastName, cc, phone, rol, churchId })
 
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })
