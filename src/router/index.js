@@ -18,27 +18,28 @@ module.exports = function (passport) {
   router.post('/login', passport.authenticate(['oauth2-client-password'], { session: false }), controllerAuth.sigIn) // ok
   router.post('/refresh-token', passport.authenticate(['rtoken'], { session: false }), controllerAuth.refreshToken) // review
   // verificará el token enviado al correo de la persona, sea usuario promedio o pastor, enviará una respuesta al front que les permitira crear el usuario.
-  router.post('/accept-invitation', invitateGuest, passport.authenticate(['oauth2-client-password'], { session: false }), controllerAuth.acceptInvitation) // ok
-  router.post('/verify-church-lead', invitateGuest, passport.authenticate(['oauth2-client-password'], { session: false }), controllerAuth.verifyChurchLead) // ok
   // invitate users
-  router.post('/create-user', invitateGuest, controllerAuth.singUp) // ok
+  router.post('/accept-invitation', invitateGuest, controllerAuth.acceptInvitation) // ok
+  router.post('/verify-church-lead', invitateGuest, controllerAuth.verifyChurchLead) // ok
+  router.post('/create-users', invitateGuest, controllerAuth.singUp) // ok
   // user endpoints
   router.use(state)
+  router.get('/my-sheeps', defaultChurch.getMySheeps)
   router.get('/services', defaultChurch.getRolesServices) // ok
   router.get('/basic-info-user', userController.basicInfo) // ok
   router.get('/worship-services', churchController.getWorshipServices) // ok
-  router.post('/save-people', defaultController.registerAttends) // ok
+  router.post('/save-people', defaultController.savePeople) // ok
   router.post('/enroll-servants-courses', churchController.enrollServantsCourses)
+  router.get('/get-countries', defaultController.getCountries) // ok
+  router.get('/get-states/:countryId', defaultController.getStates) // ok
+  router.get('/sheep/:id', defaultChurch.getSheep)
 
   // admin endpoints
   router.post('/register-sheeps', admin, defaultChurch.registerSheeps) // review okk but coninuos
   router.get('/get-people', admin, defaultChurch.getPeople) // ok
   router.post('/register-visits', admin, defaultChurch.resgisterVisits) // review ok
   router.post('/enroll-sheeps-courses', admin, churchController.enrollSheepsCourses)
-  router.post('/save-people', admin, defaultController.savePeople) // ok
   router.get('/sheeps', admin, defaultChurch.getSheeps)
-  router.get('/sheep/:id', admin, defaultChurch.getSheep)
-  router.get('/my-sheeps', admin, defaultChurch.getMySheeps)
   router.get('/get-types-people', admin, defaultChurch.getTypesPeople)
   // super admin endpoints
   router.get('/types-worship-services', superAdmin, churchController.getTypesWorshipServices) // ok
@@ -46,7 +47,6 @@ module.exports = function (passport) {
   router.post('/create-worship-service', superAdmin, churchController.createWorshipServices) // ok
   router.post('/create-rol-servant', superAdmin, churchController.createRolesServants)// ok
   router.post('/assing-services', superAdmin, churchController.asignServices) // ok por correo falta hacer uno por whattsapp pero más adelante
-  router.get('/get-types-people')
 
   router.put('/update-worship-services', superAdmin, churchController.updateWorshipService)
   router.put('/update-assign-service', superAdmin, churchController.updateAssignedService)
