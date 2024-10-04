@@ -104,6 +104,27 @@ exports.getMySheeps = async (req, res) => {
   }
 }
 
+exports.getSheepsByServant = async (req, res) => {
+  try {
+    const { servantId } = req.params
+    const { churchId } = req.user
+    if (!servantId) {
+      res.status(400).send('No se pudo acceder a las credenciales')
+      return
+    }
+
+    const result = await serviceDefault.getSheepsByServant({ servantId, churchId })
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send(result)
+  } catch (e) {
+    console.log(e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
+
 exports.getServants = async (req, res) => {
   try {
     const { churchId } = req.user

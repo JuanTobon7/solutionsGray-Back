@@ -33,6 +33,8 @@ module.exports = function (passport) {
   router.get('/get-countries', defaultController.getCountries) // ok
   router.get('/get-states/:countryId', defaultController.getStates) // ok
   router.get('/sheep/:id', defaultChurch.getSheep)
+  router.get('/sheeps-by-servant/:servantId', defaultChurch.getSheepsByServant)
+  router.get('/get-currencies', defaultController.getCurrency)
 
   // admin endpoints
   router.post('/register-sheeps', admin, defaultChurch.registerSheeps) // review okk but coninuos

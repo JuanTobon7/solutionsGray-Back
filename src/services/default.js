@@ -85,3 +85,12 @@ exports.getStates = async (countryId) => {
   }
   return result.rows
 }
+
+exports.getCurrency = async () => {
+  const query = 'SELECT * FROM countries WHERE currency IS NOT NULL;'
+  const result = await db.query(query)
+  if (result.rows.length === 0) {
+    return new Error('No hay monedas en la base de datos')
+  }
+  return result.rows
+}

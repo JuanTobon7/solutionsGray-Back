@@ -30,12 +30,15 @@ fetch('https://restcountries.com/v3.1/region/Americas')
   .then(data => {
     console.log('Received data:', JSON.stringify(data, null, 2)) // Log received data structure
     if (data && Array.isArray(data) && data.length > 0) { // Asegúrate de que 'data' es un array
-      console.log('paso el condicional')
       const filteredCountries = data.map(country => {
+        const currencyCode = Object.keys(country.currencies) // Obtener el código de la moneda (XCD en este caso)
+        console.log('currencyCode:', currencyCode[0])
+        const currencyName = country.currencies[currencyCode]
+        console.log('currencyName:', currencyName)
         return {
           id: country.cca2, // Asumiendo que cca2 es el ID único para cada país
           name: country.name.common,
-          phone_code: country.idd.root + (country.idd.suffixes ? country.idd.suffixes[0] : '')
+          currency: currencyCode[0]
         }
       })
       saveCountriesToDB(filteredCountries) // Guardar los datos filtrados en la base de datos
@@ -49,18 +52,17 @@ fetch('https://restcountries.com/v3.1/region/Americas')
 async function saveCountriesToDB (countries) {
   try {
     console.log('entro a saveCountries')
+    console.log('countries:', countries)
     for (const country of countries) {
-      console.log('Country data:', country) // AQUI MUESTRO LOS DATOS DE COUNTRY PERO SALEN UNDEFINED
-      if (!country || !country.phone_code) {
-        console.error('Invalid country data:', country)
+      if (!country || !country.id || !country.name || !country.currency) {
         continue
       }
-      const phoneCode = country.phone_code.split(' ')
+      console.log('country', country.id, country.name, country.currency)
       const result = await db.query(
-        'INSERT INTO countries (id, name, code) VALUES ($1, $2, $3) RETURNING *;',
-        [country.id, country.name, phoneCode[0]]
+        'UPDATE countries SET currency = $1 WHERE id = $2 AND name = $3 RETURNING *',
+        [country.currency, country.id, country.name]
       )
-      console.log('Insert result:', result.rows)
+      console.log('Insert result:', result.rows[0])
     }
     console.log('Datos de paises guardados correctamente en la base de datos')
   } catch (error) {

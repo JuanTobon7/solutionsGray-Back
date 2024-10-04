@@ -230,6 +230,41 @@ exports.getMySheeps = async (data) => {
   return result.rows
 }
 
+exports.getSheepsByServant = async (data) => {
+  const query = `
+     SELECT 
+      p.id,
+      p.first_name,
+      p.last_name,
+      p.email,
+      p.phone,
+      sh.status,
+      sh.description,
+      sh.guide_id,
+      COUNT(sv.id) AS cuantity_visits,
+      (SELECT sv2.visit_date
+       FROM sheeps_visits sv2
+       WHERE sv2.sheep_id = sh.person_id
+       ORDER BY sv2.visit_date DESC
+       LIMIT 1) AS last_visit,
+       (SELECT sv2.visit_date
+       FROM sheeps_visits sv2
+       WHERE sv2.sheep_id = sh.person_id
+       ORDER BY sv2.visit_date ASC
+       LIMIT 1) AS arrival_date
+    FROM people p
+    JOIN sheeps sh ON p.id = sh.person_id
+    LEFT JOIN sheeps_visits sv ON sh.person_id = sv.sheep_id
+    WHERE p.church_id = $1 AND sh.guide_id = $2
+    GROUP BY p.id, p.first_name, p.last_name, p.email, p.phone, sh.status, sh.description, sh.guide_id, sv.visit_date,last_visit,arrival_date
+  `
+  const result = await db.query(query, [data.churchId, data.servantId])
+  if (result.rows.length === 0) {
+    return new Error('Ups no hay ovejas por mostrar')
+  }
+  return result.rows
+}
+
 exports.getServants = async (churchId) => {
   const query = `
   SELECT 
@@ -288,6 +323,7 @@ exports.getPeople = async (churchId) => {
   const query = `
  SELECT
     p.id,
+    p.cc,
     p.first_name,
     p.last_name,
     p.email,
@@ -296,9 +332,7 @@ exports.getPeople = async (churchId) => {
     tp.id AS type_person_id
   FROM people p
   JOIN types_people tp ON p.type_person_id = tp.id
-  WHERE p.church_id = $1
-    AND p.id NOT IN (SELECT person_id FROM users)
-    ;
+  WHERE p.church_id = $1;
 
   `
   const result = await db.query(query, [churchId])
