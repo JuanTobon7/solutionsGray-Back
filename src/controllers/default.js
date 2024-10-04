@@ -34,22 +34,19 @@ exports.savePeople = async (req, res) => {
 
 exports.sendLead = async (req, res) => {
   try {
-    const { churchName, stateId, email, firstName, lastName, cc, phone } = req.body
-    const rol = 'Lead pastor'
-    if (!churchName || !stateId || !email || !firstName || !lastName || !cc || !phone) {
+    const { churchName, stateId, email, firstName, lastName, phone,personId } = req.body
+    if (!churchName || !stateId || !email || !firstName || !lastName || !phone || !personId) {
       res.status(400).send('Datos faltantes')
       return
     }
-
-    let result = await savePeople({ stateId, email, firstName, lastName, cc, phone, rol })
-    console.log(result)
+    const result = await defaultServices.sendLead({personId,churchName})
     if (result instanceof Error) {
-      res.status(400).send({ message: result.message })
+      res.status(400).send(`ups algo al enviar el email ${sendLead.message}`)
       return
     }
-    result = await defaultServices.sendLead({ id: result.id, churchName })
+
     const pastorName = firstName + ' ' + lastName
-    const sendLead = await sendEmail.sendLead({ churchName, stateId, email, pastorName, token: result.token })
+    const sendLead = await sendEmail.sendLead({ churchName, stateId, email, pastorName})
     if (sendLead instanceof Error) {
       res.status(400).send(`ups algo al enviar el email ${sendLead.message}`)
       return
@@ -65,26 +62,23 @@ exports.sendLead = async (req, res) => {
 
 exports.registerAttends = async (req, res) => {
   try {
-    const { stateId, email, firstName, lastName, cc, phone } = req.body
-    const rol = 'Nuevo'
-    if (!stateId || !email || !firstName || !lastName || !cc || !phone) {
-      res.status(400).send('Datos faltantes')
+   const {eventId, personId} = req.body
+   if (!eventId || !personId) {
+    res.status(400).send('Datos faltantes')
+    return
+  }
+  const result = await defaultServices.registerAttends({eventId,personId})
+    if (result instanceof Error) {
+      res.status(400).send(`ups algo al enviar el email ${result.message}`)
       return
     }
 
-    const result = await savePeople({ stateId, email, firstName, lastName, cc, phone, rol })
-    console.log(result)
-    if (result instanceof Error) {
-      res.status(400).send({ message: result.message })
-      return
-    }
-    res.status(200).send(result)
   } catch (e) {
     res.status(500).send(`Ups algo fallo en el servidor ${e.message}`)
   }
 }
 
-exports.getCountries = async (req, res) => {
+exports.getCountries = async (req, res) => {0
   const result = await defaultServices.getCountries()
   if (result instanceof Error) {
     res.status(400).send({ message: result.message })

@@ -47,6 +47,27 @@ exports.savePeople = async (data) => {
   }
 }
 
+exports.registerAttends = async (data) => {
+  try {
+    let query,result,id
+    do{
+      id = uuidv4()
+      query = `SELECT * FROM attendees WHERE id = $1;`
+      result = await db.query(query, [id])
+    }while(result.rows.length === 0 )
+
+      query = 'INSERT INTO attendees (id,person_id,event_id) VALUES($1,$2) RETURNING *;'
+    result = await db.query(query, [id,data.person_id, data.event_id])
+    if (result.rows.length === 0) {
+      return new Error('Algo ha salido mal al guardar la informacion del lead')
+    }
+    return result.rows
+  } catch (e) {
+    console.log({ messageError: e })
+    return e
+  }
+}
+
 exports.sendLead = async (data) => {
   try {
     const query = 'INSERT INTO leads (person_id,church_name) VALUES($1,$2) RETURNING *;'
@@ -91,6 +112,15 @@ exports.getCurrency = async () => {
   const result = await db.query(query)
   if (result.rows.length === 0) {
     return new Error('No hay monedas en la base de datos')
+  }
+  return result.rows
+}
+
+exports.getAttends = async () => {
+  const query = 'SELECT * FROM attendees WHERE id IS NOT NULL'
+  const result = await db.query(query)
+  if (result.rows.length === 0) {
+    return new Error('No se han registrado asistencias')
   }
   return result.rows
 }
