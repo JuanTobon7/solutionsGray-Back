@@ -230,49 +230,87 @@ exports.getMySheeps = async (data) => {
   return result.rows
 }
 
+exports.getSheepsByServant = async (data) => {
+  const query = `
+     SELECT 
+      p.id,
+      p.first_name,
+      p.last_name,
+      p.email,
+      p.phone,
+      sh.status,
+      sh.description,
+      sh.guide_id,
+      COUNT(sv.id) AS cuantity_visits,
+      (SELECT sv2.visit_date
+       FROM sheeps_visits sv2
+       WHERE sv2.sheep_id = sh.person_id
+       ORDER BY sv2.visit_date DESC
+       LIMIT 1) AS last_visit,
+       (SELECT sv2.visit_date
+       FROM sheeps_visits sv2
+       WHERE sv2.sheep_id = sh.person_id
+       ORDER BY sv2.visit_date ASC
+       LIMIT 1) AS arrival_date
+    FROM people p
+    JOIN sheeps sh ON p.id = sh.person_id
+    LEFT JOIN sheeps_visits sv ON sh.person_id = sv.sheep_id
+    WHERE p.church_id = $1 AND sh.guide_id = $2
+    GROUP BY p.id, p.first_name, p.last_name, p.email, p.phone, sh.status, sh.description, sh.guide_id, sv.visit_date,last_visit,arrival_date
+  `
+  const result = await db.query(query, [data.churchId, data.servantId])
+  if (result.rows.length === 0) {
+    return new Error('Ups no hay ovejas por mostrar')
+  }
+  return result.rows
+}
+
 exports.getServants = async (churchId) => {
   const query = `
   SELECT 
-  p.id,
-  p.first_name,
-  p.last_name,
-  p.email,
-  p.phone,
-  (SELECT rs.name
-   FROM services srv
-   LEFT JOIN roles_services rs ON srv.rol_servant_id = rs.id
-   WHERE srv.servant_id = p.id
-   GROUP BY rs.name
-   ORDER BY COUNT(*) DESC
-   LIMIT 1) AS usual_rol,
-  (SELECT e.date 
-   FROM events e
-   JOIN services srv ON e.id = srv.event_id
-   WHERE srv.servant_id = p.id
-   ORDER BY e.date DESC
-   LIMIT 1) AS last_service,
-  (SELECT c.name 
-   FROM courses c
-   JOIN church_courses chc ON c.id = chc.course_id
-   JOIN entity_courses ec ON chc.id = ec.course_id
-   WHERE ec.student_id = p.id
-   ORDER BY ec.started_at DESC
-   LIMIT 1) AS last_course,
-  (SELECT status 
-   FROM entity_courses
-   WHERE person_id = p.id
-   ORDER BY started_at DESC
-   LIMIT 1) AS status_course,
-  COUNT(DISTINCT sh.person_id) AS cuantity_sheeps_guide
-FROM 
-  people p
-JOIN 
-  sheeps sh ON p.id = sh.guide_id
-WHERE 
-  p.church_id = $1
-GROUP BY 
-  p.id, p.first_name, p.last_name, p.email, p.phone, usual_rol, last_service, last_course, status_course;
-  `
+    p.id,
+    p.first_name,
+    p.last_name,
+    p.email,
+    p.phone,
+    (SELECT rs.name
+     FROM services srv
+     LEFT JOIN roles_services rs ON srv.rol_servant_id = rs.id
+     WHERE srv.servant_id = p.id
+     GROUP BY rs.name
+     ORDER BY COUNT(*) DESC
+     LIMIT 1) AS usual_rol,
+    (SELECT e.date 
+     FROM events e
+     JOIN services srv ON e.id = srv.event_id
+     WHERE srv.servant_id = p.id
+     ORDER BY e.date DESC
+     LIMIT 1) AS last_service,
+    (SELECT c.name 
+     FROM courses c
+     JOIN church_courses chc ON c.id = chc.course_id
+     JOIN entity_courses ec ON chc.id = ec.course_id
+     WHERE ec.student_id = p.id
+     ORDER BY ec.started_at DESC
+     LIMIT 1) AS last_course,
+    (SELECT ec.status 
+     FROM entity_courses ec
+     WHERE ec.student_id = p.id
+     ORDER BY ec.started_at DESC
+     LIMIT 1) AS status_course,
+    COUNT(DISTINCT sh.person_id) AS cuantity_sheeps_guide
+  FROM 
+    people p
+  LEFT JOIN 
+    sheeps sh ON p.id = sh.guide_id
+  JOIN 
+    users u ON p.id = u.person_id
+  WHERE 
+    p.church_id = $1
+  GROUP BY 
+    p.id, p.first_name, p.last_name, p.email, p.phone;
+`
+
   const result = await db.query(query, [churchId])
   if (result.rows.length === 0) {
     return new Error('Ups no hay servidores por mostrar')
@@ -285,6 +323,7 @@ exports.getPeople = async (churchId) => {
   const query = `
  SELECT
     p.id,
+    p.cc,
     p.first_name,
     p.last_name,
     p.email,
@@ -293,9 +332,7 @@ exports.getPeople = async (churchId) => {
     tp.id AS type_person_id
   FROM people p
   JOIN types_people tp ON p.type_person_id = tp.id
-  WHERE p.church_id = $1
-    AND p.id NOT IN (SELECT person_id FROM users)
-    ;
+  WHERE p.church_id = $1;
 
   `
   const result = await db.query(query, [churchId])

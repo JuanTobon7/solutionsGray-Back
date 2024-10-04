@@ -4,6 +4,7 @@ const moment = require('moment-timezone')
 // cambiar funcion para poder elegir a quien asignar la oveja
 exports.registerSheeps = async (req, res) => {
   try {
+    console.log('req.body here in registerSheeps', req.body)
     const { personId, description, guideId } = req.body
     if (!personId || !description || !guideId) {
       res.status(400).send('Faltan datos para iniciar un proceso de acompañamiento con la persona en cuestion')
@@ -90,7 +91,29 @@ exports.getMySheeps = async (req, res) => {
   try {
     const { id } = req.user
     const { churchId } = req.user
+    console.log('aqui toi en mySheeps', id, churchId)
     const result = await serviceDefault.getMySheeps({ id, churchId })
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send(result)
+  } catch (e) {
+    console.log(e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
+
+exports.getSheepsByServant = async (req, res) => {
+  try {
+    const { servantId } = req.params
+    const { churchId } = req.user
+    if (!servantId) {
+      res.status(400).send('No se pudo acceder a las credenciales')
+      return
+    }
+
+    const result = await serviceDefault.getSheepsByServant({ servantId, churchId })
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })
       return
@@ -109,6 +132,7 @@ exports.getServants = async (req, res) => {
       throw new Error('No se pudo acceder a las credenciales')
     }
     const result = await serviceDefault.getServants(churchId)
+    console.log('result here in controller', result)
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })
       return

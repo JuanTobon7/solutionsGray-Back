@@ -3,14 +3,23 @@ const sendEmail = require('../services/sendEmail/email')
 
 exports.savePeople = async (req, res) => {
   try {
-    const { stateId, email, firstName, lastName, cc, phone } = req.body
-    const rol = 'Nuevo'
-    if (!stateId || !email || !firstName || !lastName || !cc || !phone) {
+    console.log('hey wa happen', req.body)
+    const { state_id: stateId, email, first_name: firstName, last_name: lastName, cc, phone, type_person_id: typePerson } = req.body
+    if (!stateId || !email || !firstName || !lastName || !cc || !phone || !typePerson) {
+      console.log('Datos faltantes here')
+      console.log('stateId', stateId)
+      console.log('email', email)
+      console.log('firstName', firstName)
+      console.log('lastName', lastName)
+      console.log('cc', cc)
+      console.log('phone', phone)
+      console.log('typePerson', typePerson)
+      console.log('req.body', req.body)
       res.status(400).send('Datos faltantes here')
       return
     }
     const churchId = req.user.churchId
-    const result = await defaultServices.savePeople({ stateId, email, firstName, lastName, cc, phone, rol, churchId })
+    const result = await defaultServices.savePeople({ stateId, email, firstName, lastName, cc, phone, typePerson, churchId })
 
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })
@@ -65,6 +74,42 @@ exports.registerAttends = async (req, res) => {
 
     const result = await savePeople({ stateId, email, firstName, lastName, cc, phone, rol })
     console.log(result)
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send(result)
+  } catch (e) {
+    res.status(500).send(`Ups algo fallo en el servidor ${e.message}`)
+  }
+}
+
+exports.getCountries = async (req, res) => {
+  const result = await defaultServices.getCountries()
+  if (result instanceof Error) {
+    res.status(400).send({ message: result.message })
+    return
+  }
+  res.status(200).send(result)
+}
+
+exports.getStates = async (req, res) => {
+  try {
+    const { countryId } = req.params
+    const result = await defaultServices.getStates(countryId)
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send(result)
+  } catch (e) {
+    res.status(500).send(`Ups algo fallo en el servidor ${e.message}`)
+  }
+}
+
+exports.getCurrency = async (req, res) => {
+  try {
+    const result = await defaultServices.getCurrency()
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })
       return

@@ -58,7 +58,7 @@ exports.getInfoFromValidToken = async (rtoken) => {
 
 exports.singUp = async (data) => {
   let query
-  query = 'UPDATE people SET type_person_id = (SELECT id FROM type_person WHERE name LIKE \'Usuario\') WHERE id = $1;'
+  query = 'UPDATE people SET type_person_id = (SELECT id FROM types_people WHERE name LIKE \'Usuario\') WHERE id = $1;'
   await db.query(query, [data.personId])
   query = `
         INSERT INTO users (person_id, password,rol_user_id)
@@ -73,7 +73,7 @@ exports.singUp = async (data) => {
     data.rol
   ])
   if (result.rows.length === 0) {
-    const error = new Error('Error en la Query')
+    const error = new Error('Ups algo paso al insertar el usuario')
     return error
   }
 
@@ -134,7 +134,7 @@ exports.createInvitationBoarding = async (personId, inviterId, created, expires)
     `
     let result = await db.query(query, [personId])
     if (result.rows.length > 0) {
-      return new Error('Ya tienes una invitacion pendiente')
+      return new Error('La persona ya tiene una invitacion')
     }
     query = `
         INSERT INTO invitations (person_id, inviter_id, created_at, updated_at,status)
@@ -159,11 +159,11 @@ exports.getInvitationBoarding = async (tokenId) => {
   if (!tokenId) {
     return new Error('Email no fue proporcionado')
   }
-  console.log('here here')
+  console.log('here here', tokenId, '\n\n\n\n\n\n')
   const query = `
-        SELECT i.* ,p.first_name, p.last_name, p.email, p.phone_number,
+        SELECT i.* ,p.church_id,p.first_name, p.last_name, p.email, p.phone
         FROM invitations i
-        JOIN persons p ON p.id = i.person_id
+        JOIN people p ON p.id = i.person_id
         WHERE i.person_id = $1;
     `
   const result = await db.query(query, [tokenId])
@@ -175,12 +175,15 @@ exports.getInvitationBoarding = async (tokenId) => {
   return { ...info, rol_name: 'User' }
 }
 
-exports.acceptInvitation = async (email) => {
-  const query = 'UPDATE invitations SET status = \'aceptado\' WHERE person_id = $1 RETURNING *;'
-  const result = await db.query(query, [email])
+exports.acceptInvitation = async (personId) => {
+  console.log('personId: ', personId)
+  let query = 'UPDATE invitations SET status = \'aceptado\' WHERE person_id = $1 RETURNING *;'
+  let result = await db.query(query, [personId])
   if (result.rows.length === 0) {
     return new Error('Ups no estabas en nuestra base de datos como invitado')
   }
+  query = 'SELECT email FROM people WHERE id = $1;'
+  result = await db.query(query, [personId])
   console.log('result: ', result.rows[0])
   return result.rows[0]
 }

@@ -63,8 +63,7 @@ exports.singUp = async (req, res) => {
     console.log('entramos a singUp ctrl')
 
     const { password } = req.body
-    const personId = req.newUser.id
-    const churchId = req.newUser.church_id
+    const { church_id: churchId, person_id: personId } = req.newUser
     console.log('this is the personId: ', personId)
     console.log('this is the churchId: ', churchId)
     console.log('this is the rol: ', req.newUser.rol_name)
@@ -149,7 +148,7 @@ exports.sigIn = async (req, res) => {
 exports.createInvitationBoarding = async (req, res) => {
   try {
     const { id: personId, email } = req.body
-    console.log('req.body: ', req.body)
+    console.log('req.body in createInvitationBoarding: ', req.body)
     // Verificar si el email no está definido
     if (!email) {
       return res.status(400).send('No proporcionaste el email')
@@ -164,12 +163,12 @@ exports.createInvitationBoarding = async (req, res) => {
     const result = await ouath2Services.createInvitationBoarding(personId, inviterId, created, expires)
 
     if (result instanceof Error) {
-      res.status(401).send({ message: result.message })
+      res.status(400).send({ message: result.message })
       return
     }
     console.log('result of createInvitationBoarding: ', result)
     const payload = {
-      tokenId: result.personId,
+      tokenId: result.person_id,
       duration,
       created,
       expires,
@@ -208,13 +207,13 @@ exports.acceptInvitation = async (req, res) => {
       return
     }
 
-    const result = await ouath2Services.acceptInvitation(invitate.email)
+    const result = await ouath2Services.acceptInvitation(invitate.person_id)
     if (result instanceof Error) {
       res.status(401).send({ message: 'No Haz sido invitado' })
       return
     }
 
-    res.status(200).send({ message: 'Ya Haz sido aceptado' })
+    res.status(200).send({ message: 'Ya Haz sido aceptado', email: invitate.email })
   } catch (e) {
     console.log(e)
     res.status(400).send({ message: `Ups hubo un error ${e.message}` })
