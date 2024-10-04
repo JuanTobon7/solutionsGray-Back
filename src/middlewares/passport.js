@@ -9,6 +9,7 @@ passport.use(new StrategyAuth(function (cliendID, clientSecret, done) {
   try {
     if (cliendID !== process.env.SSR_CLIENT_ID || clientSecret !== process.env.SSR_CLIENT) {
       // falta middlewares para manejar errores
+      console.log('No son')
       const error = 'Cliente Incorrecto'
       throw error
     }
@@ -21,8 +22,9 @@ passport.use(new StrategyAuth(function (cliendID, clientSecret, done) {
 // refresh token
 passport.use('rtoken', new CustomStrategy(async function (request, done) {
   try {
-    if (request.body.grant_type === 'refresh_token' && request.body.refresh_token) {
-      const data = await oauth2Service.getInfoFromValidToken(request.body.refresh_token)
+    if (request.cookies && request.cookies.refresh_token) {
+      const refreshToken = request.cookies.refresh_token
+      const data = await oauth2Service.getInfoFromValidToken(refreshToken)
       if (!data) {
         const error = new Error('Informacion de session no encontrada')
         error.status = 401
