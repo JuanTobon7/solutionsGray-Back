@@ -58,29 +58,27 @@ exports.createWorshipServices = async (req, res) => {
 
     const churchId = req.user.churchId
 
+    const userDate = moment(date)
+
     // No realizar ninguna conversión de zona horaria, simplemente usamos la fecha que proporcionó el usuario
-    const eventDateInUserTZ = moment(date) // Usar la fecha tal como la envió el usuario
     const currentDateInUserTZ = moment().tz(timeZone) // Fecha actual en el servidor (no afecta al evento)
 
     // Calcula la diferencia en días entre la fecha del culto y la fecha actual
-    const daysDifference = eventDateInUserTZ.diff(currentDateInUserTZ, 'days')
+    const daysDifference = userDate.diff(currentDateInUserTZ, 'days')
 
     // Validar que la diferencia de días sea mayor o igual a 4
     if (daysDifference < 4) {
+      console.log('holaa')
       res.status(400).send({ message: 'No se pueden programar cultos con menos de 4 días de anterioridad' })
       return
     }
 
     // Almacenar la fecha tal cual la ingresó el usuario (sin convertir a UTC)
-    const dateWhorship = eventDateInUserTZ.format('YYYY-MM-DD HH:mm')
-
     // Debug para verificar que se almacena la fecha correctamente
-    console.log('dateWhorship', dateWhorship)
-
     const result = await serviceChurch.createWorshipServices({
       typeWorshipId,
       sermonTittle,
-      dateWhorship,
+      userDate,
       churchId,
       description
     })
