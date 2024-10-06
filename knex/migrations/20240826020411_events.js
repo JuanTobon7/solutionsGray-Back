@@ -5,7 +5,7 @@ exports.up = async function (knex) {
     table.timestamp('date', { useTz: false }).notNullable()
     table.string('church_id', 40).references('id').inTable('churches')
     table.string('group_id', 40).references('id').inTable('group_churches')
-    table.integer('worship_service_type_id').references('id').inTable('types_worship_service')
+    table.integer('worship_service_type_id').references('id').inTable('types_whorship_service')
     table.string('description', 255)
   })
 }
