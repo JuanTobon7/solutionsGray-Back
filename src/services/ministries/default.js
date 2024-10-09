@@ -7,24 +7,24 @@ function parseDate (data) {
 }
 
 exports.registerAttends = async (data) => {
-  console.log('data:', data)
+  console.log('data, im here:', data, '\n\n\n\n\n')
 
   let id, query, result
   do {
     id = uuidv4()
     query = `
-            SELECT * FROM new_attendees WHERE id = $1;
+            SELECT * FROM attendees WHERE id = $1;
         `
     result = await db.query(query, [id])
   } while (result.rows.length > 0)
 
   query = `
-        INSERT INTO new_attendees (id,cc,name,email,country_id,church_id,event_id)
-        VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *;
+        INSERT INTO attendees (id,event_id,person_id)
+        VALUES($1,$2,$3) RETURNING *;
         `
-  result = await db.query(query, [id, data.cc, data.name, data.email, data.countryId, data.churchId, data.eventId])
+  result = await db.query(query, [id, data.eventId, data.personId])
   if (result.rows.length === 0) {
-    return new Error(`Ups algo fallo al registrar a la persona ${data.name}`)
+    return new Error('Ups algo fallo al registrar la asistencia de la persona')
   }
   return result.rows[0]
 }
@@ -348,6 +348,96 @@ exports.getRolesServices = async () => {
   const result = await db.query(query)
   if (result.rows.length === 0) {
     return new Error('Ups no hay servicios por mostrar')
+  }
+  return result.rows
+}
+
+exports.getTypesContributions = async () => {
+  const query = 'SELECT * FROM types_contributions;'
+  const result = await db.query(query)
+  if (result.rows.length === 0) {
+    return new Error('Ups no hay tipos de contribuciones por mostrar')
+  }
+  return result.rows
+}
+
+exports.saveContributions = async (data) => {
+  let id, query, result
+  do {
+    id = uuidv4()
+    query = `
+            SELECT * FROM contributions WHERE id = $1;
+        `
+    result = await db.query(query, [id])
+  } while (result.rows.length > 0)
+  query = `
+    INSERT INTO contributions (id,person_id,event_id,currency_id)
+    VALUES ($1,$2,$3,$4) RETURNING *;
+  `
+  result = await db.query(query, [id, data.personId, data.eventId, data.currencyId])
+  if (result.rows.length === 0) {
+    return new Error('Ups algo fallo al registrar la contribución')
+  }
+  return result.rows[0]
+}
+
+exports.saveDetailsContributions = async (data) => {
+  let id, query, result
+  do {
+    id = uuidv4()
+    query = `
+            SELECT * FROM details_contributions WHERE id = $1;
+        `
+    result = await db.query(query, [id])
+  }
+  while (result.rows.length > 0)
+  query = `
+    INSERT INTO details_contributions 
+    (id,contribution_id,type_contribution_id,amount)
+    VALUES ($1,$2,$3,$4) RETURNING *;
+  `
+  result = await db.query(query, [id, data.contributionId, data.type, data.amount])
+  if (result.rows.length === 0) {
+    return new Error('Ups algo fallo al registrar la contribución')
+  }
+  return result.rows[0]
+}
+
+exports.getAttendance = async (eventId) => {
+  console.log('data', eventId)
+  const query = 'SELECT * FROM attendees WHERE event_id = $1;'
+  const result = await db.query(query, [eventId])
+  if (result.rows.length === 0) {
+    return new Error('Ups no hay asistentes por mostrar')
+  }
+  return result.rows
+}
+
+exports.deleteAttendance = async (data) => {
+  const query = 'DELETE FROM attendees WHERE person_id = $1 AND event_id = $2 RETURNING *;'
+  const result = await db.query(query, [data.personId, data.eventId])
+  if (result.rows.length === 0) {
+    return new Error('Ups algo fallo al eliminar la asistencia')
+  }
+  return result.rows[0]
+}
+
+exports.getOfferings = async (eventId) => {
+  const query = `
+   SELECT 
+    tc.name AS type_contribution, 
+    SUM(dc.amount) AS amount,        
+    COUNT(c.id) AS quantity_contributions
+  FROM contributions c
+  LEFT JOIN details_contributions dc ON c.id = dc.contribution_id AND c.event_id = $1
+  RIGHT JOIN types_contributions tc ON dc.type_contribution_id = tc.id
+  GROUP BY type_contribution;
+
+
+  `
+  const result = await db.query(query, [eventId])
+  if (result.rows.length === 0) {
+    return new Error('Ups no hay ofrendas por mostrar')
   }
   return result.rows
 }

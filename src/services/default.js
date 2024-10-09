@@ -47,27 +47,6 @@ exports.savePeople = async (data) => {
   }
 }
 
-exports.registerAttends = async (data) => {
-  try {
-    let query,result,id
-    do{
-      id = uuidv4()
-      query = `SELECT * FROM attendees WHERE id = $1;`
-      result = await db.query(query, [id])
-    }while(result.rows.length === 0 )
-
-      query = 'INSERT INTO attendees (id,person_id,event_id) VALUES($1,$2) RETURNING *;'
-    result = await db.query(query, [id,data.person_id, data.event_id])
-    if (result.rows.length === 0) {
-      return new Error('Algo ha salido mal al guardar la informacion del lead')
-    }
-    return result.rows
-  } catch (e) {
-    console.log({ messageError: e })
-    return e
-  }
-}
-
 exports.sendLead = async (data) => {
   try {
     const query = 'INSERT INTO leads (person_id,church_name) VALUES($1,$2) RETURNING *;'
@@ -108,7 +87,11 @@ exports.getStates = async (countryId) => {
 }
 
 exports.getCurrency = async () => {
-  const query = 'SELECT * FROM countries WHERE currency IS NOT NULL;'
+  console.log('entro')
+  const query = `
+  SELECT tp.*,c.name as country_name FROM types_currencies tp
+  JOIN countries c ON tp.country_id = c.id
+   WHERE currency_type IS NOT NULL;`
   const result = await db.query(query)
   if (result.rows.length === 0) {
     return new Error('No hay monedas en la base de datos')

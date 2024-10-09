@@ -4,6 +4,7 @@ exports.up = async function (knex) {
     table.string('id', 40).primary()
     table.string('person_id', 40).notNullable().references('id').inTable('people')
     table.string('event_id', 40).notNullable().references('id').inTable('events')
+    table.string('currency_id', 40).references('id').inTable('types_currencies')
   })
 }
 
