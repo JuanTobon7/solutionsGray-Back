@@ -30,6 +30,7 @@ exports.createChurches = async (req, res) => {
 
 exports.getTypesWorshipServices = async (req, res) => {
   try {
+    console.log('here get types worship services')
     const result = await serviceChurch.getTypesWorshipServices()
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })

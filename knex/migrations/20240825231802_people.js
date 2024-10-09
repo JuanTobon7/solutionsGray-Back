@@ -8,6 +8,7 @@ exports.up = async function (knex) {
     table.string('phone', 256).notNullable()
     table.string('type_person_id', 40).references('id').inTable('types_people')
     table.string('state_id', 40).references('id').inTable('states')
+    table.string('avatar', 256)
     table.string('church_id', 40).references('id').inTable('churches').onDelete('CASCADE')
 
     table.unique(['cc', 'church_id'])

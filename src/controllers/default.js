@@ -34,19 +34,19 @@ exports.savePeople = async (req, res) => {
 
 exports.sendLead = async (req, res) => {
   try {
-    const { churchName, stateId, email, firstName, lastName, phone,personId } = req.body
+    const { churchName, stateId, email, firstName, lastName, phone, personId } = req.body
     if (!churchName || !stateId || !email || !firstName || !lastName || !phone || !personId) {
       res.status(400).send('Datos faltantes')
       return
     }
-    const result = await defaultServices.sendLead({personId,churchName})
+    const result = await defaultServices.sendLead({ personId, churchName })
     if (result instanceof Error) {
       res.status(400).send(`ups algo al enviar el email ${sendLead.message}`)
       return
     }
 
     const pastorName = firstName + ' ' + lastName
-    const sendLead = await sendEmail.sendLead({ churchName, stateId, email, pastorName})
+    const sendLead = await sendEmail.sendLead({ churchName, stateId, email, pastorName })
     if (sendLead instanceof Error) {
       res.status(400).send(`ups algo al enviar el email ${sendLead.message}`)
       return
@@ -60,25 +60,7 @@ exports.sendLead = async (req, res) => {
   }
 }
 
-exports.registerAttends = async (req, res) => {
-  try {
-   const {eventId, personId} = req.body
-   if (!eventId || !personId) {
-    res.status(400).send('Datos faltantes')
-    return
-  }
-  const result = await defaultServices.registerAttends({eventId,personId})
-    if (result instanceof Error) {
-      res.status(400).send(`ups algo al enviar el email ${result.message}`)
-      return
-    }
-
-  } catch (e) {
-    res.status(500).send(`Ups algo fallo en el servidor ${e.message}`)
-  }
-}
-
-exports.getCountries = async (req, res) => {0
+exports.getCountries = async (req, res) => {
   const result = await defaultServices.getCountries()
   if (result instanceof Error) {
     res.status(400).send({ message: result.message })
@@ -103,6 +85,7 @@ exports.getStates = async (req, res) => {
 
 exports.getCurrency = async (req, res) => {
   try {
+    console.log('entro')
     const result = await defaultServices.getCurrency()
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })

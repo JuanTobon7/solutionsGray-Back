@@ -15,18 +15,20 @@ module.exports = function (passport) {
   })
   router.post('/save-leads-church', defaultController.sendLead) // ok
   // auth
+  router.get('/get-offerings/:eventId', defaultChurch.getOfferings)
+
   router.post('/login', passport.authenticate(['oauth2-client-password'], { session: false }), controllerAuth.sigIn) // ok
   router.post('/refresh-token', passport.authenticate(['rtoken'], { session: false }), controllerAuth.refreshToken) // review
   // verificará el token enviado al correo de la persona, sea usuario promedio o pastor, enviará una respuesta al front que les permitira crear el usuario.
   // invitate users
   router.post('/create-user', invitateGuest, controllerAuth.singUp) // ok
-  router.post('/save-people', defaultController.registerAttends) // ok
   router.post('/accept-invitation', invitateGuest, controllerAuth.acceptInvitation) // ok
   router.post('/verify-church-lead', invitateGuest, controllerAuth.verifyChurchLead) // ok
   router.post('/create-users', invitateGuest, controllerAuth.singUp) // ok
   // user endpoints
-  router.get('/get-countries',defaultController.getCountries)
+  router.get('/get-countries', defaultController.getCountries)
   router.use(state)
+  router.post('/register-attendance', defaultChurch.registerAttends) // ok
   router.get('/my-sheeps', defaultChurch.getMySheeps)
   router.get('/services', defaultChurch.getRolesServices) // ok
   router.get('/basic-info-user', userController.basicInfo) // ok
@@ -38,6 +40,9 @@ module.exports = function (passport) {
   router.get('/sheep/:id', defaultChurch.getSheep)
   router.get('/sheeps-by-servant/:servantId', defaultChurch.getSheepsByServant)
   router.get('/get-currencies', defaultController.getCurrency)
+  router.get('/get-types-contributions', defaultChurch.getTypesContributions)
+  router.get('/get-attendance/:eventId', defaultChurch.getAttendance)
+  router.delete('/delete-attendance/:personId/:eventId', defaultChurch.deleteAttendance)
 
   // admin endpoints
   router.post('/register-sheeps', admin, defaultChurch.registerSheeps) // review okk but coninuos
@@ -46,6 +51,7 @@ module.exports = function (passport) {
   router.post('/enroll-sheeps-courses', admin, churchController.enrollSheepsCourses)
   router.get('/sheeps', admin, defaultChurch.getSheeps)
   router.get('/get-types-people', admin, defaultChurch.getTypesPeople)
+  router.post('/save-contribution', admin, defaultChurch.saveContribution)
   // super admin endpoints
   router.get('/types-worship-services', superAdmin, churchController.getTypesWorshipServices) // ok
   router.get('/assigned-services/:id', superAdmin, churchController.getServices) // ok

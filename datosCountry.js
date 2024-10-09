@@ -1,5 +1,7 @@
 const { Pool } = require('pg')
 const fetch = require('node-fetch')
+const { v4: uuidv4 } = require('uuid')
+
 require('dotenv').config()
 
 const db = new Pool({
@@ -28,19 +30,20 @@ fetch('https://restcountries.com/v3.1/region/Americas')
     return response.json()
   })
   .then(data => {
-    console.log('Received data:', JSON.stringify(data, null, 2)) // Log received data structure
     if (data && Array.isArray(data) && data.length > 0) { // Asegúrate de que 'data' es un array
       const filteredCountries = data.map(country => {
         const currencyCode = Object.keys(country.currencies) // Obtener el código de la moneda (XCD en este caso)
-        console.log('currencyCode:', currencyCode[0])
-        const currencyName = country.currencies[currencyCode]
-        console.log('currencyName:', currencyName)
+        console.log('currencyCode:', country.currencies[currencyCode])
+        const currencySymbol = 's'// Obtener el símbolo de la moneda ($ en este caso)
         return {
           id: country.cca2, // Asumiendo que cca2 es el ID único para cada país
           name: country.name.common,
-          currency: currencyCode[0]
+          currency: currencyCode[0],
+          phone_code: country.idd.root + (country.idd.suffixes ? country.idd.suffixes[0] : ''),
+          symbol: country.currencies[currencyCode]
         }
       })
+      console.log('Filtered countries:', filteredCountries) // Log filtered data
       saveCountriesToDB(filteredCountries) // Guardar los datos filtrados en la base de datos
     } else {
       console.error('Data format is not supported or no data available:', data)
@@ -51,16 +54,23 @@ fetch('https://restcountries.com/v3.1/region/Americas')
 // Function to save countries to database
 async function saveCountriesToDB (countries) {
   try {
-    console.log('entro a saveCountries')
-    console.log('countries:', countries)
     for (const country of countries) {
       if (!country || !country.id || !country.name || !country.currency) {
         continue
       }
-      console.log('country', country.id, country.name, country.currency)
-      const result = await db.query(
-        'UPDATE countries SET currency = $1 WHERE id = $2 AND name = $3 RETURNING *',
-        [country.currency, country.id, country.name]
+      console.log('Inserting country:', country.symbol)
+      const symbol = country.symbol && country.symbol.symbol ? country.symbol.symbol : '$'
+
+      let result = await db.query(
+        'INSERT INTO countries (code, id, name) VALUES ($1, $2, $3) RETURNING *',
+        [country.phone_code, country.id, country.name]
+      )
+      const id = uuidv4()
+      result = await db.query(
+        `INSERT INTO types_currencies (id,country_id,currency_type,currency_symbol) 
+        VALUES
+        ($1, $2, $3, $4) RETURNING *;
+        `, [id, country.id, country.currency, symbol]
       )
       console.log('Insert result:', result.rows[0])
     }
