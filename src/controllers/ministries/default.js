@@ -1,5 +1,4 @@
 const serviceDefault = require('../../services/ministries/default')
-const moment = require('moment-timezone')
 
 // cambiar funcion para poder elegir a quien asignar la oveja
 exports.registerSheeps = async (req, res) => {
@@ -26,20 +25,18 @@ exports.registerSheeps = async (req, res) => {
 
 exports.resgisterVisits = async (req, res) => {
   try {
-    const { visitDate, description, sheepId, userTimezone } = req.body
-    if (!visitDate || !description || !sheepId || !userTimezone) {
+    console.log('req.body here in registerVisits', req.body)
+    const { date, description, sheepId, userTimeZone } = req.body
+    if (!date || !description || !sheepId || !userTimeZone) {
       res.status(400).send('Faltan datos para registrar la visita')
       return
     }
-    const visitDateTimezone = moment.tz(visitDate, userTimezone)
-    const visitDateFormat = visitDateTimezone.format('YYYY-MM-DD HH:mm')
-    const result = await serviceDefault.resgisterVisits({ visitDateFormat, description, sheepId })
-
-    if (result instanceof Error) {
-      res.status(400).send({ message: result.message })
+    const response = await serviceDefault.registerVisits({ date, description, sheepId })
+    if (response instanceof Error) {
+      res.status(400).send({ message: response.message })
       return
     }
-    res.status(200).send('Se ha registrado exitosamente la visita a la oveja en cuestion')
+    res.status(200).send({ message: 'Se ha registrado exitosamente la visita a la oveja' })
   } catch (e) {
     console.log(e)
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
@@ -305,6 +302,44 @@ exports.getOfferings = async (req, res) => {
       return
     }
     res.status(200).send(result)
+  } catch (e) {
+    console.log(e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
+
+exports.getVisits = async (req, res) => {
+  try {
+    const { sheepId } = req.params
+    if (!sheepId) {
+      res.status(400).send('Faltan datos para obtener las visitas')
+    }
+    const result = await serviceDefault.getVisits(sheepId)
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send(result)
+  } catch (e) {
+    console.log(e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
+
+exports.saveCourses = async (req, res) => {
+  try {
+    console.log('req.body here in saveCourses', req.body)
+    const { name, description, startDate, endDate, churchId } = req.body
+    if (!name || !description || !startDate || !endDate || !churchId) {
+      res.status(400).send('Faltan datos para registrar el curso')
+      return
+    }
+    const result = await serviceDefault.saveCourses({ name, description, startDate, endDate, churchId })
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send({ message: 'Se ha registrado exitosamente el curso' })
   } catch (e) {
     console.log(e)
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
