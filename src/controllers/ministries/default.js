@@ -1,123 +1,94 @@
 const serviceDefault = require('../../services/ministries/default')
 
+exports.createRolesServants = async (req, res) => {
+  try {
+    console.log('here roles servants')
+    const name = req.body.name
+    if (!name) {
+      res.status(400).send({ message: 'Faltan Datos' })
+      return
+    }
+    console.log('name', name)
+    const result = await serviceDefault.createRolesServants(name)
+    if (result instanceof Error) {
+      res.status(400).send({ message: `Ups algo paso ${result.message}` })
+      return
+    }
+
+    res.status(200).send({ message: `El rol ha sido correctamente creado ${result.name}` })
+  } catch (e) {
+    res.status(500).send({ message: e })
+  }
+}
 // cambiar funcion para poder elegir a quien asignar la oveja
-exports.registerSheeps = async (req, res) => {
+
+// añadimos servicios o privilegios para los servidores de la iglesia
+exports.asignServices = async (req, res) => {
   try {
-    console.log('req.body here in registerSheeps', req.body)
-    const { personId, description, guideId } = req.body
-    if (!personId || !description || !guideId) {
-      res.status(400).send('Faltan datos para iniciar un proceso de acompañamiento con la persona en cuestion')
+    console.log('\n\n\n\nassign services controller begin\n\n\n\n\n\n')
+    const servicesAssigned = req.body
+    console.log('servicesAssigned', servicesAssigned, '\n\n\n\n\n\n')
+    if (!servicesAssigned) {
+      res.status(400).send('Ups faltan datos')
       return
     }
 
-    const result = await serviceDefault.registerSheep({ personId, description, guideId })
-
-    if (result instanceof Error) {
-      res.status(400).send({ message: result.message })
+    // Función para validar los campos obligatorios
+    const validateService = (service) => {
+      for (const item of service.assignedServices) {
+        console.log('Validating service item', item)
+        if (!item.personId || !item.rolService) {
+          return 'Missing personId or rolService'
+        }
+      }
+      return null
     }
 
-    res.status(200).send('Se ha iniciado un proceso de acompañamiento con la persona inscrita')
+    console.log('here')
+    // Función para asignar y validar un servicio
+    const processService = async (service) => {
+      console.log('service in processService: ', service)
+      const validationError = validateService(service)
+      if (validationError) {
+        console.log('Validation error encountered')
+        return { error: validationError }
+      }
+      console.log('Passed validateService')
+
+      // Procesamos todos los servicios dentro de assignedServices
+      for (const assignedService of service.assignedServices) {
+        const data = {
+          servantId: assignedService.personId,
+          rolServantId: assignedService.rolService,
+          eventId: service.id
+        }
+        console.log('Data to assign service function', data)
+        const result = await serviceDefault.assignServices(data)
+        console.log('Result after assigning service', result)
+        if (result instanceof Error) {
+          return { error: result.message }
+        }
+      }
+
+      return { success: true }
+    }
+
+    // Procesar si es un array o un único servicio
+    const services = Array.isArray(servicesAssigned) ? servicesAssigned : [servicesAssigned]
+    console.log('services process', services)
+
+    // Iterar sobre los servicios
+    for (const service of services) {
+      console.log('Validating and processing service')
+      const { error } = await processService(service)
+      if (error) {
+        res.status(400).send({ message: error })
+        return
+      }
+    }
+
+    res.status(200).send({ message: 'El servicio fue asignado correctamente' })
   } catch (e) {
-    console.log(e)
-    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
-  }
-}
-
-exports.resgisterVisits = async (req, res) => {
-  try {
-    console.log('req.body here in registerVisits', req.body)
-    const { date, description, sheepId, userTimeZone } = req.body
-    if (!date || !description || !sheepId || !userTimeZone) {
-      res.status(400).send('Faltan datos para registrar la visita')
-      return
-    }
-    const response = await serviceDefault.registerVisits({ date, description, sheepId })
-    if (response instanceof Error) {
-      res.status(400).send({ message: response.message })
-      return
-    }
-    res.status(200).send({ message: 'Se ha registrado exitosamente la visita a la oveja' })
-  } catch (e) {
-    console.log(e)
-    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
-  }
-}
-
-exports.getSheeps = async (req, res) => {
-  try {
-    console.log('coming here sheeps')
-    const { churchId } = req.user
-    if (!churchId) {
-      throw new Error('No se pudo acceder a las credenciales')
-    }
-
-    const result = await serviceDefault.getSheeps(churchId)
-    if (result instanceof Error) {
-      res.status(400).send({ message: result.message })
-      return
-    }
-    res.status(200).send(result)
-  } catch (e) {
-    console.log(e)
-    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
-  }
-}
-
-exports.getSheep = async (req, res) => {
-  try {
-    const { id } = req.params
-    const churchId = req.user.churchId
-    if (!id) {
-      res.status(400).send('No se pudo acceder a las credenciales')
-      return
-    }
-
-    const result = await serviceDefault.getSheep({ id, churchId })
-    if (result instanceof Error) {
-      res.status(400).send({ message: result.message })
-      return
-    }
-    res.status(200).send(result)
-  } catch (e) {
-    console.log(e)
-    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
-  }
-}
-
-exports.getMySheeps = async (req, res) => {
-  try {
-    const { id } = req.user
-    const { churchId } = req.user
-    console.log('aqui toi en mySheeps', id, churchId)
-    const result = await serviceDefault.getMySheeps({ id, churchId })
-    if (result instanceof Error) {
-      res.status(400).send({ message: result.message })
-      return
-    }
-    res.status(200).send(result)
-  } catch (e) {
-    console.log(e)
-    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
-  }
-}
-
-exports.getSheepsByServant = async (req, res) => {
-  try {
-    const { servantId } = req.params
-    const { churchId } = req.user
-    if (!servantId) {
-      res.status(400).send('No se pudo acceder a las credenciales')
-      return
-    }
-
-    const result = await serviceDefault.getSheepsByServant({ servantId, churchId })
-    if (result instanceof Error) {
-      res.status(400).send({ message: result.message })
-      return
-    }
-    res.status(200).send(result)
-  } catch (e) {
-    console.log(e)
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
@@ -141,24 +112,6 @@ exports.getServants = async (req, res) => {
   }
 }
 
-exports.getPeople = async (req, res) => {
-  try {
-    const { churchId } = req.user
-    if (!churchId) {
-      res.status(400).send({ message: 'No se pudo acceder a las credenciales' })
-    }
-    const result = await serviceDefault.getPeople(churchId)
-    if (result instanceof Error) {
-      res.status(400).send({ message: result.message })
-      return
-    }
-    res.status(200).send(result)
-  } catch (e) {
-    console.log(e)
-    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
-  }
-}
-
 exports.getRolesServices = async (req, res) => {
   try {
     console.log('coming here roles')
@@ -168,65 +121,6 @@ exports.getRolesServices = async (req, res) => {
       return
     }
     res.status(200).send(result)
-  } catch (e) {
-    console.log(e)
-    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
-  }
-}
-
-exports.getTypesPeople = async (req, res) => {
-  try {
-    console.log('coming here types')
-    const result = await serviceDefault.getTypesPeople()
-    if (result instanceof Error) {
-      res.status(400).send({ message: result.message })
-      return
-    }
-    res.status(200).send(result)
-  } catch (e) {
-    console.log(e)
-    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
-  }
-}
-
-exports.getTypesContributions = async (req, res) => {
-  try {
-    console.log('coming here types')
-    const result = await serviceDefault.getTypesContributions()
-    if (result instanceof Error) {
-      res.status(400).send({ message: result.message })
-      return
-    }
-    res.status(200).send(result)
-  } catch (e) {
-    console.log(e)
-    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
-  }
-}
-
-exports.saveContribution = async (req, res) => {
-  try {
-    console.log('req.body here in saveContribution', req.body)
-    const { personId, eventId, currencyId, offerings } = req.body
-    if (!personId || !eventId || !currencyId || !offerings) {
-      res.status(400).send('Faltan datos para registrar la contribución')
-      return
-    }
-    let result = await serviceDefault.saveContributions({ personId, eventId, currencyId })
-    if (result instanceof Error) {
-      res.status(400).send({ message: result.message })
-      return
-    }
-    const contributionId = result.id
-    const saveDetails = async () => {
-      for (let i = 0; i < offerings.length; i++) {
-        const { type, amount } = offerings[i]
-        result = await serviceDefault.saveDetailsContributions({ contributionId, type, amount })
-      }
-    }
-    saveDetails()
-
-    res.status(200).send({ message: 'Se ha registrado exitosamente la contribución' })
   } catch (e) {
     console.log(e)
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
@@ -290,58 +184,63 @@ exports.deleteAttendance = async (req, res) => {
   }
 }
 
-exports.getOfferings = async (req, res) => {
+exports.getServices = async (req, res) => {
   try {
-    const { eventId } = req.params
+    console.log('im here in getServices')
+    console.log('request', req.params)
+    const { id: eventId } = req.params
+    console.log('eventId', eventId)
     if (!eventId) {
-      res.status(400).send('Faltan datos para obtener las ofrendas')
+      res.status(400).send('Faltan datos para esta operacion')
+      return
     }
-    const result = await serviceDefault.getOfferings(eventId)
+    const result = await serviceDefault.getServices(eventId)
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })
       return
     }
+
     res.status(200).send(result)
   } catch (e) {
-    console.log(e)
+    res.status(500).send({ message: e })
+  }
+}
+
+exports.updateAssignedService = async (req, res) => {
+  try {
+    console.log('Hi im update assinged service', req.body)
+    const { service, eventId, person, serviceId } = req.body
+    if (!service || !eventId || !person || !serviceId) {
+      res.status(400).send('Ups faltan datos para esta operacion')
+      return
+    }
+    console.log('assignedServices')
+    const result = await serviceDefault.updateAssignedService({ rolServantId: service.id, eventId, servantId: person.id, serviceId })
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send({ message: 'Se ha actualizado correctamente el servicio' })
+  } catch (e) {
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
 
-exports.getVisits = async (req, res) => {
+exports.deleteAssignedService = async (req, res) => {
   try {
-    const { sheepId } = req.params
-    if (!sheepId) {
-      res.status(400).send('Faltan datos para obtener las visitas')
+    const { serviceId } = req.params
+    console.log('\n\n\nreq.body', req.params, '\n\n\n')
+    if (!serviceId) {
+      res.status(400).send('Ups faltan datos para esta operacion')
+      return
     }
-    const result = await serviceDefault.getVisits(sheepId)
+    const result = await serviceDefault.deleteAssignedService(serviceId)
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })
       return
     }
-    res.status(200).send(result)
+    res.status(200).send({ message: 'Se ha eliminado correctamente el servicio' })
   } catch (e) {
-    console.log(e)
-    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
-  }
-}
-
-exports.saveCourses = async (req, res) => {
-  try {
-    console.log('req.body here in saveCourses', req.body)
-    const { name, description, startDate, endDate, churchId } = req.body
-    if (!name || !description || !startDate || !endDate || !churchId) {
-      res.status(400).send('Faltan datos para registrar el curso')
-      return
-    }
-    const result = await serviceDefault.saveCourses({ name, description, startDate, endDate, churchId })
-    if (result instanceof Error) {
-      res.status(400).send({ message: result.message })
-      return
-    }
-    res.status(200).send({ message: 'Se ha registrado exitosamente el curso' })
-  } catch (e) {
-    console.log(e)
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
