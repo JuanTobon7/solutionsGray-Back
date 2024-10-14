@@ -30,7 +30,9 @@ module.exports = function (passport) {
   router.use(state)
   router.post('/register-attendance', defaultChurch.registerAttends) // ok
   router.get('/my-sheeps', defaultChurch.getMySheeps)
+  router.post('/register-visits', defaultChurch.resgisterVisits) // ok
   router.get('/services', defaultChurch.getRolesServices) // ok
+  router.get('/get-visits/:sheepId', defaultChurch.getVisits)
   router.get('/basic-info-user', userController.basicInfo) // ok
   router.get('/worship-services', churchController.getWorshipServices) // ok
   router.post('/save-people', defaultController.savePeople) // ok
@@ -43,6 +45,7 @@ module.exports = function (passport) {
   router.get('/get-types-contributions', defaultChurch.getTypesContributions)
   router.get('/get-attendance/:eventId', defaultChurch.getAttendance)
   router.delete('/delete-attendance/:personId/:eventId', defaultChurch.deleteAttendance)
+  router.post('/save-courses', defaultChurch.saveCourses)
 
   // admin endpoints
   router.post('/register-sheeps', admin, defaultChurch.registerSheeps) // review okk but coninuos
