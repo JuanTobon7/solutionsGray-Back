@@ -69,6 +69,7 @@ module.exports = function (passport) {
   router.put('/update-assign-service', superAdmin, defaultMinisteries.updateAssignedService) // esto puede ir en defaultMinisteries
   router.delete('/delete-assign-service/:serviceId', superAdmin, defaultMinisteries.deleteAssignedService) // esto puede ir en defaultMinisteries
   router.post('/create-course', superAdmin, courseController.registerCourses) // revisar
+  router.post('/create-chapters-course', superAdmin, courseController.registerChaptersCourses) // revisar
   router.post('/assing-courses', superAdmin, courseController.assignCourses) // remember send an Email
   router.post('/invitation-boarding', superAdmin, controllerAuth.createInvitationBoarding) // ok
   router.get('/church', churchController.getChurchInfo)

@@ -71,18 +71,6 @@ exports.getServants = async (churchId) => {
      WHERE srv.servant_id = p.id
      ORDER BY e.date DESC
      LIMIT 1) AS last_service,
-    (SELECT c.name 
-     FROM courses c
-     JOIN church_courses chc ON c.id = chc.course_id
-     JOIN entity_courses ec ON chc.id = ec.course_id
-     WHERE ec.student_id = p.id
-     ORDER BY ec.started_at DESC
-     LIMIT 1) AS last_course,
-    (SELECT ec.status 
-     FROM entity_courses ec
-     WHERE ec.student_id = p.id
-     ORDER BY ec.started_at DESC
-     LIMIT 1) AS status_course,
     COUNT(DISTINCT sh.person_id) AS cuantity_sheeps_guide
   FROM 
     people p
@@ -129,15 +117,6 @@ exports.deleteAttendance = async (data) => {
     return new Error('Ups algo fallo al eliminar la asistencia')
   }
   return result.rows[0]
-}
-
-exports.getVisits = async (sheepId) => {
-  const query = 'SELECT * FROM sheeps_visits WHERE sheep_id = $1;'
-  const result = await db.query(query, [sheepId])
-  if (result.rows.length === 0) {
-    return new Error('Ups no hay visitas por mostrar')
-  }
-  return result.rows
 }
 
 exports.assignServices = async (data) => {

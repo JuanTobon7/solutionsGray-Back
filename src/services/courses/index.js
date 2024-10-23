@@ -50,6 +50,28 @@ exports.registerCourses = async (data) => {
   return result.rows[0]
 }
 
+exports.registerChaptersCourses = async (data) => {
+  let query, result, id
+  do {
+    id = uuidv4()
+    query = 'SELECT * FROM chapters_courses WHERE id = $1;'
+    result = await db.query(query, [id])
+  } while (result.rows.length !== 0)
+
+  query = `
+      INSERT INTO chapters_courses (id,numb_chapter,course_id,name)
+      VALUES ($1,$2,$3,$4)
+      RETURNING *;
+  `
+  result = await db.query(query, [id, data.numbChapter, data.courseId, data.name])
+
+  if (result.rows.length === 0) {
+    return new Error('Ups algo fallo al registrar el capitulo en nuestra base de datos')
+  }
+
+  return result.rows[0]
+}
+
 exports.getCourses = async () => {
   const query = 'SELECT * FROM courses;'
   const result = await db.query(query)

@@ -57,6 +57,15 @@ exports.registerVisits = async (data) => {
   return result.rows[0]
 }
 
+exports.getVisits = async (sheepId) => {
+  const query = 'SELECT * FROM sheeps_visits WHERE sheep_id = $1;'
+  const result = await db.query(query, [sheepId])
+  if (result.rows.length === 0) {
+    return new Error('Ups no hay visitas por mostrar')
+  }
+  return result.rows
+}
+
 exports.getSheeps = async (churchId) => {
   console.log('churchId in getSheeps', churchId)
   /** *
@@ -72,31 +81,40 @@ exports.getSheeps = async (churchId) => {
    * ***/
   const query = `
     SELECT 
-      p.id,
-      p.first_name,
-      p.last_name,
-      p.email,
-      p.phone,
-      sh.status,
-      sh.description,
-      sh.guide_id,
-      COUNT(sv.id) AS cuantity_visits,
-      (SELECT sv2.visit_date
-       FROM sheeps_visits sv2
-       WHERE sv2.sheep_id = sh.person_id
-       ORDER BY sv2.visit_date DESC
-       LIMIT 1) AS last_visit,
-       (SELECT sv2.visit_date
-       FROM sheeps_visits sv2
-       WHERE sv2.sheep_id = sh.person_id
-       ORDER BY sv2.visit_date ASC
-       LIMIT 1) AS arrival_date
+        p.id,
+        p.first_name,
+        p.last_name,
+        p.email,
+        p.phone,
+        sh.status,
+        sh.description,
+        sh.guide_id,
+        COALESCE(COUNT(sv.id), 0) AS cuantity_visits,
+        visit_dates.last_visit,
+        visit_dates.arrival_date
     FROM people p
     JOIN sheeps sh ON p.id = sh.person_id
+    LEFT JOIN (
+        SELECT 
+            sheep_id,
+            MAX(visit_date) AS last_visit,
+            MIN(visit_date) AS arrival_date
+        FROM sheeps_visits
+        GROUP BY sheep_id
+    ) visit_dates ON sh.person_id = visit_dates.sheep_id
     LEFT JOIN sheeps_visits sv ON sh.person_id = sv.sheep_id
     WHERE p.church_id = $1
-    GROUP BY p.id, p.first_name, p.last_name, p.email, p.phone, sh.status, sh.description, sh.guide_id, sv.visit_date,last_visit,arrival_date
-
+    GROUP BY 
+        p.id, 
+        p.first_name, 
+        p.last_name, 
+        p.email, 
+        p.phone, 
+        sh.status, 
+        sh.description, 
+        sh.guide_id, 
+        visit_dates.last_visit,
+        visit_dates.arrival_date;
   `
   console.log('query', query)
   const result = await db.query(query, [churchId])

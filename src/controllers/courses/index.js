@@ -21,6 +21,30 @@ exports.registerCourses = async (req, res) => {
   }
 }
 
+exports.registerChaptersCourses = async (req, res) => {
+  try {
+    const { chapters, courseId } = req.body
+    if (!chapters.rows || !courseId) {
+      res.status(400).send('Ups faltan datos para registrar los capitulos del curso')
+    }
+    for (const chapter of chapters) {
+      const { numbChapter, name } = chapter
+      if (!numbChapter || !name) {
+        res.status(400).send('Ups faltan datos para registrar los capitulos del curso')
+        return
+      }
+      const result = await serviceCourses.registerChaptersCourses({ numbChapter, name, courseId })
+      if (result instanceof Error) {
+        res.status(400).send({ message: result.message })
+        return
+      }
+    }
+  } catch (e) {
+    console.log(e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
+
 exports.getCourses = async (res) => {
   try {
     const result = await serviceCourses.getCourses()
