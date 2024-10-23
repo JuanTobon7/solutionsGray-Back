@@ -41,7 +41,7 @@ exports.sendLead = async (req, res) => {
     }
     const result = await defaultServices.sendLead({ personId, churchName })
     if (result instanceof Error) {
-      res.status(400).send(`ups algo al enviar el email ${sendLead.message}`)
+      res.status(400).send(`ups algo al enviar el email ${result.message}`)
       return
     }
 
@@ -73,20 +73,6 @@ exports.getStates = async (req, res) => {
   try {
     const { countryId } = req.params
     const result = await defaultServices.getStates(countryId)
-    if (result instanceof Error) {
-      res.status(400).send({ message: result.message })
-      return
-    }
-    res.status(200).send(result)
-  } catch (e) {
-    res.status(500).send(`Ups algo fallo en el servidor ${e.message}`)
-  }
-}
-
-exports.getCurrency = async (req, res) => {
-  try {
-    console.log('entro')
-    const result = await defaultServices.getCurrency()
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })
       return
