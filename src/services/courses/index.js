@@ -33,16 +33,15 @@ exports.enrollCourses = async (data) => {
 
 exports.registerCourses = async (data) => {
   let id, query, result
-  console.log('data: ', data)
   do {
     id = uuidv4()
     query = 'SELECT * FROM courses WHERE id = $1;'
     result = await db.query(query, [id])
   } while (result.rows.length !== 0)
 
-  query = 'INSERT INTO courses (id,name,publisher,description) VALUES ($1,$2,$3,$4) RETURNING *;'
-  result = await db.query(query, [id, data.name, data.publisher, data.description])
-  console.log('result: ', result)
+  query = 'INSERT INTO courses (id,name,publisher,description,church_id) VALUES ($1,$2,$3,$4,$5) RETURNING *;'
+  result = await db.query(query, [id, data.name, data.publisher, data.description, data.churchId])
+
   if (result.rows.length === 0) {
     return new Error('Ups algo paso al registrar el curso')
   }
@@ -63,7 +62,7 @@ exports.registerChaptersCourses = async (data) => {
       VALUES ($1,$2,$3,$4)
       RETURNING *;
   `
-  result = await db.query(query, [id, data.numbChapter, data.courseId, data.name])
+  result = await db.query(query, [id, data.numbChapter, data.courseId, data.title])
 
   if (result.rows.length === 0) {
     return new Error('Ups algo fallo al registrar el capitulo en nuestra base de datos')
@@ -72,11 +71,28 @@ exports.registerChaptersCourses = async (data) => {
   return result.rows[0]
 }
 
-exports.getCourses = async () => {
-  const query = 'SELECT * FROM courses;'
-  const result = await db.query(query)
+exports.getCourses = async (churchId) => {
+  const query = `
+    SELECT c.*,COUNT(ch.id) AS cuantity_modules,COUNT(DISTINCT(sa.chapter_id)) AS cuantity_classes FROM courses c
+    JOIN chapters_courses ch ON  ch.course_id = c.id
+    LEFT JOIN students_attendance sa ON sa.chapter_id = ch.id
+    WHERE c.church_id = $1
+    GROUP BY c.id;
+  `
+  const result = await db.query(query, [churchId])
   if (result.rows.length === 0) {
     return new Error('Ups no pudimos obtener los cursos')
+  }
+  return result.rows
+}
+
+exports.getChaptersCourses = async (courseId) => {
+  const query = `
+    SELECT * FROM chapters_courses WHERE course_id = $1;
+  `
+  const result = await db.query(query, [courseId])
+  if (result.rows.length === 0) {
+    return new Error('Ups no pudimos obtener los capitulos del curso')
   }
   return result.rows
 }

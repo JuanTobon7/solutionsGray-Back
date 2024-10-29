@@ -32,7 +32,9 @@ module.exports = function (passport) {
   // user endpoints
   router.get('/get-countries', defaultController.getCountries)
   router.use(state)
+  router.get('/get-chapters-courses/:courseId', courseController.getChaptersCourses)
   router.post('/register-attendance', defaultMinisteries.registerAttends) // ok
+  router.get('/get-courses', courseController.getCourses)
   router.get('/my-sheeps', sheepsController.getMySheeps) // esto se puede borrar para ahorrar codigo, ya hay getSheep by Servant
   router.post('/register-visits', sheepsController.resgisterVisits) // ok
   router.get('/services', defaultMinisteries.getRolesServices) // ok

@@ -4,17 +4,19 @@ const serviceCourses = require('../../services/courses')
 exports.registerCourses = async (req, res) => {
   try {
     const { name, publisher, description } = req.body
+    const churchId = req.user.churchId
     if (!name || !publisher || !description) {
       res.status(400).send('Faltan datos para registrar el curso en cuestion')
+      return
     }
 
-    const result = await serviceCourses.registerCourses({ name, publisher, description })
+    const result = await serviceCourses.registerCourses({ name, publisher, description, churchId })
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })
       return
     }
-
-    res.status(200).send(`Se ha registrado exitosamente el curso ${name}`)
+    console.log('result', result)
+    res.status(200).send({ message: 'Curso registrado exitosamente', data: result })
   } catch (e) {
     console.log(e)
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
@@ -24,33 +26,39 @@ exports.registerCourses = async (req, res) => {
 exports.registerChaptersCourses = async (req, res) => {
   try {
     const { chapters, courseId } = req.body
-    if (!chapters.rows || !courseId) {
+    console.log('chapters', chapters, courseId)
+    if (!chapters || !courseId) {
       res.status(400).send('Ups faltan datos para registrar los capitulos del curso')
+      return
     }
     for (const chapter of chapters) {
-      const { numbChapter, name } = chapter
-      if (!numbChapter || !name) {
+      const { numbChapter, title } = chapter
+      if (!numbChapter || !title) {
         res.status(400).send('Ups faltan datos para registrar los capitulos del curso')
         return
       }
-      const result = await serviceCourses.registerChaptersCourses({ numbChapter, name, courseId })
+      const result = await serviceCourses.registerChaptersCourses({ numbChapter, title, courseId })
       if (result instanceof Error) {
         res.status(400).send({ message: result.message })
         return
       }
     }
+    res.status(200).send({ message: 'Capitulos registrados exitosamente' })
   } catch (e) {
     console.log(e)
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
 
-exports.getCourses = async (res) => {
+exports.getCourses = async (req, res) => {
   try {
-    const result = await serviceCourses.getCourses()
+    const churchId = req.user.churchId
+    const result = await serviceCourses.getCourses(churchId)
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })
+      return
     }
+    res.status(200).send(result)
   } catch (e) {
     console.log(e)
     res.status(500).send('Ups algo paso en el servidor,', e)
@@ -119,6 +127,26 @@ exports.enrollSheepsCourses = async (req, res) => {
     }
 
     res.status(200).send('Se asigno correctamente la oveja a este curso')
+  } catch (e) {
+    console.log(e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
+
+exports.getChaptersCourses = async (req, res) => {
+  try {
+    const { courseId } = req.params
+    if (!courseId) {
+      res.status(400).send('Ups faltan datos para realizar esta operacion')
+      return
+    }
+    const result = await serviceCourses.getChaptersCourses(courseId)
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    console.log('result', result)
+    res.status(200).send(result)
   } catch (e) {
     console.log(e)
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)

@@ -67,7 +67,6 @@ exports.getVisits = async (sheepId) => {
 }
 
 exports.getSheeps = async (churchId) => {
-  console.log('churchId in getSheeps', churchId)
   /** *
    * Fecha de inicio
    * Status
@@ -116,13 +115,10 @@ exports.getSheeps = async (churchId) => {
         visit_dates.last_visit,
         visit_dates.arrival_date;
   `
-  console.log('query', query)
   const result = await db.query(query, [churchId])
-  console.log('result', result)
   if (result.rows.length === 0) {
     return new Error('Ups no hay ovejas por mostrar')
   }
-  console.log('result', result.rows)
   return result.rows
 }
 
