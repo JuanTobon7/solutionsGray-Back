@@ -32,7 +32,9 @@ module.exports = function (passport) {
   // user endpoints
   router.get('/get-countries', defaultController.getCountries)
   router.use(state)
+  router.get('/get-schedules-courses/:courseId', courseController.getShedulesCourses)
   router.get('/get-chapters-courses/:courseId', courseController.getChaptersCourses)
+  router.get('/get-my-courses', courseController.getMyCourses)
   router.post('/register-attendance', defaultMinisteries.registerAttends) // ok
   router.get('/get-courses', courseController.getCourses)
   router.get('/my-sheeps', sheepsController.getMySheeps) // esto se puede borrar para ahorrar codigo, ya hay getSheep by Servant
@@ -42,7 +44,8 @@ module.exports = function (passport) {
   router.get('/basic-info-user', userController.basicInfo) // ok
   router.get('/worship-services', churchController.getWorshipServices) // ok
   router.post('/save-people', defaultPeopleController.savePeople) // ok
-  router.post('/enroll-servants-courses', courseController.enrollServantsCourses)
+  router.post('/shedule-courses', courseController.sheduleCourses)
+  router.get('/get-courses-in-charge', admin, courseController.getCoursesInCharge)
   router.get('/get-countries', defaultController.getCountries) // ok
   router.get('/get-states/:countryId', defaultController.getStates) // ok
   router.get('/sheep/:id', sheepsController.getSheep) // ok
@@ -56,7 +59,6 @@ module.exports = function (passport) {
   router.post('/register-sheeps', admin, sheepsController.registerSheeps) // ok
   router.get('/get-people', admin, defaultPeopleController.getPeople) // estoy puede ir en defaultController
   router.post('/register-visits', admin, sheepsController.resgisterVisits) // review ok
-  router.post('/enroll-sheeps-courses', admin, courseController.enrollSheepsCourses)
   router.get('/sheeps', admin, sheepsController.getSheeps)
   router.get('/get-types-people', admin, defaultPeopleController.getTypesPeople) //
   router.post('/save-contribution', admin, financeController.saveContribution)
@@ -73,6 +75,7 @@ module.exports = function (passport) {
   router.post('/create-course', superAdmin, courseController.registerCourses) // revisar
   router.post('/create-chapters-course', superAdmin, courseController.registerChaptersCourses) // revisar
   router.post('/assing-courses', superAdmin, courseController.assignCourses) // remember send an Email
+  router.post('/save-shedules-courses', superAdmin, courseController.saveShedulesCourses) // ok
   router.post('/invitation-boarding', superAdmin, controllerAuth.createInvitationBoarding) // ok
   router.get('/church', churchController.getChurchInfo)
   router.get('/servants', superAdmin, defaultMinisteries.getServants)
