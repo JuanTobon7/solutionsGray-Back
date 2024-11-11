@@ -3,6 +3,7 @@ exports.up = async function (knex) {
     table.string('id', 40).primary() // Crear una columna con un VARCHAR de longitud 7
     table.string('name', 255).notNullable() // Modificar la longitud del VARCHAR
     table.text('description').notNullable() // descripcion del libro
+    table.string('church_id', 40).references('id').inTable('churches').notNullable()
     table.string('publisher', 255).notNullable() // editorial del libro
   })
 }
