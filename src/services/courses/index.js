@@ -181,10 +181,12 @@ exports.sheduleCourses = async (data) => {
 exports.getCoursesInCharge = async (teacherId) => {
   const query = `
     SELECT 
+    DISTINCT(tc.id),
     c.name,
     c.description,
     c.publisher,
-    COUNT(DISTINCT(sc.*)) as cuantity_students,
+    sa.date,
+    COUNT(DISTINCT(sa.*)) as cuantity_students,
     COUNT(DISTINCT(ch.*)) as cuantity_chapters,
     COUNT(DISTINCT(sa.chapter_id)) as progress
     FROM teachers_courses tc
@@ -193,11 +195,33 @@ exports.getCoursesInCharge = async (teacherId) => {
     JOIN chapters_courses ch ON c.id = ch.course_id
     LEFT JOIN students_attendance sa ON sc.id = sa.student_id
     WHERE tc.teacher_id = $1
-    GROUP BY c.name,c.description,c.publisher;
+    GROUP BY c.name,c.description,c.publisher,tc.id,sa.date;
   `
   const result = await db.query(query, [teacherId])
   if (result.rows.length === 0) {
     return new Error('Ups no pudimos obtener los cursos que tienes a cargo')
+  }
+  return result.rows
+}
+
+exports.getStudentsCourse = async (courseId) => {
+  console.log('courseId in service', courseId)
+  const query = `
+    SELECT 
+      p.first_name,
+      p.last_name,
+      p.email,
+      p.avatar,
+      p.phone,
+      st.status
+    FROM people p 
+    JOIN students_courses st ON st.student_id = p.id
+    JOIN teachers_courses tc ON st.teachers_courses_id = tc.id
+    WHERE tc.id = $1;
+      `
+  const result = await db.query(query, [courseId])
+  if (result.rows.length === 0) {
+    return new Error('Ups no pudimos obtener los estudiantes de este curso')
   }
   return result.rows
 }

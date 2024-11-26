@@ -208,3 +208,24 @@ exports.getCoursesInCharge = async (req, res) => {
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
+
+exports.getStudentsCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params
+    console.log('courseId', courseId)
+    if (!courseId) {
+      res.status(400).send('Ups faltan datos para realizar esta operacion')
+      return
+    }
+    const result = await serviceCourses.getStudentsCourse(courseId)
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    console.log('result', result)
+    res.status(200).send(result)
+  } catch (e) {
+    console.log(e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
