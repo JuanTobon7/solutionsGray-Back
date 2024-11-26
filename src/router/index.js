@@ -62,6 +62,7 @@ module.exports = function (passport) {
   router.get('/sheeps', admin, sheepsController.getSheeps)
   router.get('/get-types-people', admin, defaultPeopleController.getTypesPeople) //
   router.post('/save-contribution', admin, financeController.saveContribution)
+  router.get('/get-students-course/:courseId', admin, courseController.getStudentsCourse)
   // super admin endpoints
   router.get('/types-worship-services', superAdmin, churchController.getTypesWorshipServices) // ok
   router.get('/assigned-services/:id', superAdmin, defaultMinisteries.getServices) // ok
