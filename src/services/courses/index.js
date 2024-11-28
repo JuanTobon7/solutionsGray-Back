@@ -181,7 +181,8 @@ exports.sheduleCourses = async (data) => {
 exports.getCoursesInCharge = async (teacherId) => {
   const query = `
     SELECT 
-    DISTINCT(tc.id),
+    DISTINCT(tc.id) as teacher_course_id,
+    c.id as course_id,
     c.name,
     c.description,
     c.publisher,
@@ -195,7 +196,7 @@ exports.getCoursesInCharge = async (teacherId) => {
     JOIN chapters_courses ch ON c.id = ch.course_id
     LEFT JOIN students_attendance sa ON sc.id = sa.student_id
     WHERE tc.teacher_id = $1
-    GROUP BY c.name,c.description,c.publisher,tc.id,sa.date;
+    GROUP BY c.name,c.description,c.publisher,tc.id,sa.date,c.id;
   `
   const result = await db.query(query, [teacherId])
   if (result.rows.length === 0) {
@@ -208,6 +209,7 @@ exports.getStudentsCourse = async (courseId) => {
   console.log('courseId in service', courseId)
   const query = `
     SELECT 
+      p.id,
       p.first_name,
       p.last_name,
       p.email,
@@ -224,4 +226,44 @@ exports.getStudentsCourse = async (courseId) => {
     return new Error('Ups no pudimos obtener los estudiantes de este curso')
   }
   return result.rows
+}
+
+exports.getAttendanceCourse = async (courseId) => {
+  const query = `
+    SELECT 
+      sa.student_id,
+      sa.chapter_id,
+      sa.date,
+      sa.status
+    FROM students_courses sc 
+    JOIN students_attendance sa ON sa.student_id = sc.student_id
+    JOIN chapters_courses ch ON sa.chapter_id = ch.id
+    WHERE sc.teachers_courses_id = $1;
+  `
+  const result = await db.query(query, [courseId])
+  if (result.rows.length === 0) {
+    return new Error('Ups no pudimos obtener la asistencia de los estudiantes')
+  }
+  return result.rows
+}
+
+exports.registerAttendanceCourse = async (data) => {
+  let query, result, id
+  do {
+    id = uuidv4()
+    query = 'SELECT * FROM students_attendance WHERE id = $1;'
+    result = await db.query(query, [id])
+  } while (result.rows.length !== 0)
+
+  query = `
+    INSERT INTO students_attendance (id,student_id,chapter_id,date,status)
+    VALUES ($1,$2,$3,$4,$5)
+    RETURNING *;
+  `
+  console.log('data', data)
+  result = await db.query(query, [id, data.studentId, data.chapterId, data.date, data.status])
+  if (result.rows.length === 0) {
+    return new Error('Ups algo fallo al registrar la asistencia')
+  }
+  return result.rows[0]
 }
