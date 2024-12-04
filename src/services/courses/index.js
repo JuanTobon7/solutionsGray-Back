@@ -86,7 +86,7 @@ exports.getCourses = async (churchId) => {
 
 exports.getChaptersCourses = async (courseId) => {
   const query = `
-    SELECT * FROM chapters_courses WHERE course_id = $1;
+    SELECT * FROM chapters_courses WHERE course_id = $1 ORDER BY numb_chapter ASC;
   `
   const result = await db.query(query, [courseId])
   if (result.rows.length === 0) {
@@ -102,12 +102,12 @@ exports.assignCourses = async (data) => {
     query = 'SELECT * FROM teachers_courses WHERE id = $1;'
     result = await db.query(query, [id])
   } while (result.rows.length !== 0)
-
-  query = `INSERT INTO teachers_courses (id,course_id,teacher_id)
-            VALUES ($1,$2,$3)
+  const status = 'En progreso'
+  query = `INSERT INTO teachers_courses (id,course_id,teacher_id,status)
+            VALUES ($1,$2,$3,$4)
             RETURNING *
         `
-  result = await db.query(query, [id, data.courseId, data.teacherId])
+  result = await db.query(query, [id, data.courseId, data.teacherId, status])
 
   if (result.rows.length === 0) {
     return new Error('Ups algo fallo al asignar el curso a tal profesor en nuestra Base de datos')
@@ -181,22 +181,27 @@ exports.sheduleCourses = async (data) => {
 exports.getCoursesInCharge = async (teacherId) => {
   const query = `
     SELECT 
-    DISTINCT(tc.id) as teacher_course_id,
-    c.id as course_id,
-    c.name,
-    c.description,
-    c.publisher,
-    sa.date,
-    COUNT(DISTINCT(sa.*)) as cuantity_students,
-    COUNT(DISTINCT(ch.*)) as cuantity_chapters,
-    COUNT(DISTINCT(sa.chapter_id)) as progress
-    FROM teachers_courses tc
-    JOIN courses c ON tc.course_id = c.id
-    LEFT JOIN students_courses sc ON tc.id = sc.teachers_courses_id
-    JOIN chapters_courses ch ON c.id = ch.course_id
-    LEFT JOIN students_attendance sa ON sc.id = sa.student_id
-    WHERE tc.teacher_id = $1
-    GROUP BY c.name,c.description,c.publisher,tc.id,sa.date,c.id;
+      tc.id AS teacher_course_id,
+      c.id AS course_id,
+      c.name,
+      c.description,
+      c.publisher,
+      tc.status as status_course,
+      COUNT(DISTINCT sc.student_id) AS cuantity_students,
+      COUNT(DISTINCT ch.id) AS cuantity_chapters      
+  FROM teachers_courses tc
+  JOIN courses c ON tc.course_id = c.id
+  LEFT JOIN students_courses sc ON tc.id = sc.teachers_courses_id
+  LEFT JOIN students_attendance sa ON sc.student_id = sa.student_id
+  JOIN chapters_courses ch ON c.id = ch.course_id
+  WHERE tc.teacher_id = $1
+  GROUP BY 
+      tc.id, 
+      c.id, 
+      c.name, 
+      c.description, 
+      c.publisher,
+      tc.status;
   `
   const result = await db.query(query, [teacherId])
   if (result.rows.length === 0) {
@@ -210,6 +215,7 @@ exports.getStudentsCourse = async (courseId) => {
   const query = `
     SELECT 
       p.id,
+      st.id as student_course_id,
       p.first_name,
       p.last_name,
       p.email,
@@ -229,16 +235,19 @@ exports.getStudentsCourse = async (courseId) => {
 }
 
 exports.getAttendanceCourse = async (courseId) => {
+  console.log('courseId in service in getAttendaceCOurse', courseId)
   const query = `
     SELECT 
+      sa.id,
       sa.student_id,
       sa.chapter_id,
-      sa.date,
-      sa.status
+      ch.numb_chapter,
+      sa.date
     FROM students_courses sc 
-    JOIN students_attendance sa ON sa.student_id = sc.student_id
+    JOIN students_attendance sa ON sa.student_id = sc.id
     JOIN chapters_courses ch ON sa.chapter_id = ch.id
-    WHERE sc.teachers_courses_id = $1;
+    WHERE sc.teachers_courses_id = $1
+    ORDER BY ch.numb_chapter ASC;
   `
   const result = await db.query(query, [courseId])
   if (result.rows.length === 0) {
@@ -256,14 +265,48 @@ exports.registerAttendanceCourse = async (data) => {
   } while (result.rows.length !== 0)
 
   query = `
-    INSERT INTO students_attendance (id,student_id,chapter_id,date,status)
-    VALUES ($1,$2,$3,$4,$5)
+    INSERT INTO students_attendance (id,student_id,chapter_id,date)
+    VALUES ($1,$2,$3,$4)
     RETURNING *;
   `
   console.log('data', data)
-  result = await db.query(query, [id, data.studentId, data.chapterId, data.date, data.status])
+  result = await db.query(query, [id, data.studentId, data.chapterId, data.date])
   if (result.rows.length === 0) {
     return new Error('Ups algo fallo al registrar la asistencia')
   }
+  return result.rows[0]
+}
+
+exports.deleteAttendanceCourse = async (attenId) => {
+  console.log('attenId', attenId)
+  const query = 'DELETE FROM students_attendance WHERE id = $1 RETURNING *;'
+  const result = await db.query(query, [attenId])
+  if (result.rows.length === 0) {
+    return new Error('Ups algo fallo al eliminar la asistencia')
+  }
+  console.log('result', result.rows[0])
+  return result.rows[0]
+}
+
+exports.enrrollNoUsersInCourse = async (data) => {
+  let query, result, id
+  do {
+    id = uuidv4()
+    query = 'SELECT * FROM students_courses WHERE id = $1;'
+    result = await db.query(query, [id])
+  } while (result.rows.length !== 0)
+
+  query = `
+    INSERT INTO students_courses (id,student_id,teachers_courses_id,status)
+    VALUES ($1,$2,$3,$4)
+    RETURNING *;
+  `
+  const status = 'En progreso'
+  result = await db.query(query, [id, data.personId, data.courseId, status])
+
+  if (result.rows.length === 0) {
+    return new Error('Ups algo fallo al inscribir al estudiante en el curso')
+  }
+
   return result.rows[0]
 }

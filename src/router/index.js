@@ -65,6 +65,8 @@ module.exports = function (passport) {
   router.get('/get-students-course/:courseId', admin, courseController.getStudentsCourse)
   router.get('/get-attendance-course/:courseId', admin, courseController.getAttendanceCourse)
   router.post('/register-attendance-course', admin, courseController.registerAttendanceCourse)
+  router.post('/register-nouser-course', admin, courseController.enrrollNoUsersInCourse)
+  router.delete('/delete-attendance-course/:attenId', admin, courseController.deleteAttendanceCourse)
   // super admin endpoints
   router.get('/types-worship-services', superAdmin, churchController.getTypesWorshipServices) // ok
   router.get('/assigned-services/:id', superAdmin, defaultMinisteries.getServices) // ok
