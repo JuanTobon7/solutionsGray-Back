@@ -314,14 +314,14 @@ exports.enrrollNoUsersInCourse = async (data) => {
 exports.stadisticAttendanceCourse = async (courseId) => {
   const query = `
     SELECT 
-      sa.id,
+      sc.student_id,
       COUNT(sa.id) as cuantity_attendance,
-      (SELECT COUNT(DISTINCT(sa.date)) FROM students_attendance sa WHERE sc.teachers_courses_id = $1) as cuantity_classes
+      (SELECT COUNT(DISTINCT(sa.date)) FROM students_attendance sa JOIN students_courses sc ON sc.id = sa.student_id  WHERE sc.teachers_courses_id = $1) as cuantity_classes
     FROM students_courses sc
     JOIN students_attendance sa ON sc.id = sa.student_id
     JOIN chapters_courses ch ON sa.chapter_id = ch.id
     WHERE sc.teachers_courses_id = $1
-    GROUP BY cuantity_attendance, cuantity_classes
+    GROUP BY sc.student_id
     ORDER BY cuantity_attendance ASC;
   `
   const result = await db.query(query, [courseId])
@@ -329,4 +329,16 @@ exports.stadisticAttendanceCourse = async (courseId) => {
     return new Error('Ups no pudimos obtener la estadistica de asistencia')
   }
   return result.rows
+}
+
+exports.evaluateStudent = async (data) => {
+  console.log('data', data)
+  const query = `
+    UPDATE students_courses SET status = $1 WHERE student_id = $2 RETURNING *;
+  `
+  const result = await db.query(query, [data.status, data.studentId])
+  if (result.rows.length === 0) {
+    return new Error('Ups algo fallo al evaluar al estudiante')
+  }
+  return result.rows[0]
 }
