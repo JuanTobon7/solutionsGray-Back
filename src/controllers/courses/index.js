@@ -307,3 +307,44 @@ exports.enrrollNoUsersInCourse = async (req, res) => {
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
+
+exports.stadisticAttendanceCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params
+    if (!courseId) {
+      res.status(400).send('Ups faltan datos para realizar esta operacion')
+      return
+    }
+    const result = await serviceCourses.stadisticAttendanceCourse(courseId)
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send(result)
+  } catch (e) {
+    console.log(e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
+
+exports.evaluateStudent = async (req, res) => {
+  try {
+    const { status } = req.body
+    const studentId = req.params.studentId
+    console.log('req.body', req.body)
+    console.log('studentId', studentId)
+    if (!status || !studentId) {
+      res.status(400).send('Faltan datos para realizar esta operacion')
+      return
+    }
+    const result = await serviceCourses.evaluateStudent({ status, studentId })
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send({ message: 'Se ha evaluado exitosamente al estudiante', result })
+  } catch (e) {
+    console.log(e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
