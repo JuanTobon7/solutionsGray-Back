@@ -54,6 +54,8 @@ module.exports = function (passport) {
   router.get('/get-types-contributions', financeController.getTypesContributions) // review
   router.get('/get-attendance/:eventId', defaultMinisteries.getAttendance) // ok
   router.delete('/delete-attendance/:personId/:eventId', defaultMinisteries.deleteAttendance)
+  router.get('/check-qualified/:eventId', defaultMinisteries.checkQualified)
+  router.post('/qualify-service', defaultMinisteries.qualifyService)
 
   // admin endpoints
   router.post('/register-sheeps', admin, sheepsController.registerSheeps) // ok
@@ -87,6 +89,8 @@ module.exports = function (passport) {
   router.get('/church', churchController.getChurchInfo)
   router.get('/servants', superAdmin, defaultMinisteries.getServants)
   router.get('/courses', superAdmin, courseController.getCourses)
+  router.get('/average-rating-servants/:typeServiceId', superAdmin, defaultMinisteries.getAverageRating)
+  router.get('/average-rating-by-servant/:servantId', superAdmin, defaultMinisteries.getAverageRatingByServant)
   // pastor endpoints
   router.post('/create-church', pastor, churchController.createChurches) // ok
 

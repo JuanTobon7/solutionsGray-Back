@@ -64,7 +64,7 @@ exports.getServants = async (churchId) => {
      WHERE srv.servant_id = p.id
      GROUP BY rs.name
      ORDER BY COUNT(*) DESC
-     LIMIT 1) AS usual_rol,
+     LIMIT 1) AS usual_rol,     
     (SELECT e.date 
      FROM events e
      JOIN services srv ON e.id = srv.event_id
@@ -231,5 +231,83 @@ exports.updateAssignedService = async (data) => {
     return new Error('No se pudo actualizar el servicio asignado')
   }
   console.log('result in updateAssignedService: ', result.rows[0])
+  return result.rows[0]
+}
+
+exports.checkQualified = async (data) => {
+  const query = `
+    SELECT
+      rt.rating,
+      rt.person_qualifier_id
+    FROM rating_services rt
+    JOIN services sr ON rt.service_id = sr.id
+    JOIN events e ON sr.event_id = e.id
+    JOIN people p ON rt.person_qualifier_id = p.id
+    WHERE sr.servant_id = $1 AND e.id = $2;
+  `
+  const result = await db.query(query, [data.userId, data.eventId])
+  if (result.rows.length === 0) {
+    return new Error('No ha calificado')
+  }
+  return result.rows[0]
+}
+
+exports.qualifyService = async (data) => {
+  let id, query, result
+  do {
+    id = uuidv4()
+    query = `
+      SELECT * FROM rating_services WHERE id = $1;
+    `
+    result = await db.query(query, [id])
+  } while (result.rows.length !== 0)
+  query = `
+    INSERT INTO rating_services (id,service_id, rating, person_qualifier_id)
+    VALUES ($1, $2, $3,$4)
+    RETURNING *;
+  `
+  result = await db.query(query, [id, data.serviceId, data.qualification, data.userId])
+  if (result.rows.length === 0) {
+    return new Error('No se pudo calificar el servicio')
+  }
+  return result.rows[0]
+}
+
+exports.getAverageRating = async (data) => {
+  const query = `
+    SELECT
+      AVG(rt.rating) AS average_rating,
+      sr.servant_id
+    FROM rating_services rt
+    JOIN services sr ON rt.service_id = sr.id
+    JOIN people p ON sr.servant_id = p.id
+    JOIN events e ON sr.event_id = e.id
+    WHERE e.rol_servant_id = $1 AND p.church_id = $2
+    GROUP BY sr.servant_id;
+  `
+  const result = await db.query(query, [data.typeServiceId, data.churchId])
+  if (result.rows.length === 0) {
+    return new Error('No hay calificaciones')
+  }
+  return result.rows[0]
+}
+
+exports.getAverageRatingByServant = async (data) => {
+  const query = `
+    SELECT
+      AVG(rt.rating) AS average_rating,
+      rs.name AS rol_servant
+    FROM rating_services rt
+    JOIN services sr ON rt.service_id = sr.id
+    JOIN roles_services rs ON sr.rol_servant_id = rs.id
+    JOIN people p ON sr.servant_id = p.id
+    JOIN events e ON sr.event_id = e.id
+    WHERE sr.servant_id = $1
+    GROUP BY sr.servant_id;
+  `
+  const result = await db.query(query, [data.servantId])
+  if (result.rows.length === 0) {
+    return new Error('No hay calificaciones')
+  }
   return result.rows[0]
 }
