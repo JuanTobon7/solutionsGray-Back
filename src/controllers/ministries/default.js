@@ -244,3 +244,82 @@ exports.deleteAssignedService = async (req, res) => {
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
+
+exports.checkQualified = async (req, res) => {
+  try {
+    const userId = req.user.id
+    const { eventId } = req.params
+    if (!userId || !eventId) {
+      res.status(400).send('Ups faltan datos para esta operacion')
+      return
+    }
+    const result = await serviceDefault.checkQualified({ userId, eventId })
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send({ message: 'Califico', result })
+  } catch (e) {
+    console.log(e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
+
+exports.qualifyService = async (req, res) => {
+  try {
+    const { serviceId, qualification } = req.body
+    const userId = req.user.id
+    if (!userId || !serviceId || !qualification) {
+      res.status(400).send('Ups faltan datos para esta operacion')
+      return
+    }
+    const result = await serviceDefault.qualifyService({ userId, serviceId, qualification })
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send({ message: 'Se ha calificado correctamente el servicio' })
+  } catch (e) {
+    console.log(e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
+
+exports.getServantsAverageRating = async (req, res) => {
+  try {
+    const { typeServiceId } = req.params
+    const { churchId } = req.user
+    if (!typeServiceId || !churchId) {
+      res.status(400).send('Ups faltan datos para esta operacion')
+      return
+    }
+    const result = await serviceDefault.getAverageRating({ typeServiceId, churchId })
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send(result)
+  } catch (e) {
+    console.log(e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
+
+exports.getAverageRatingByServant = async (req, res) => {
+  try {
+    const { personId } = req.params
+    if (!personId) {
+      res.status(400).send('Ups faltan datos para esta operacion')
+      return
+    }
+    const result = await serviceDefault.getAverageRatingByServant(personId)
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send(result)
+  } catch (e) {
+    console.log(e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
