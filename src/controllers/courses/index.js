@@ -251,17 +251,98 @@ exports.getAttendanceCourse = async (req, res) => {
 
 exports.registerAttendanceCourse = async (req, res) => {
   try {
-    const { studentId, chapterId, date, status } = req.body
-    if (!studentId || !chapterId || !date || !status) {
+    const { studentId, chapterId, date } = req.body
+    if (!studentId || !chapterId || !date) {
       res.status(400).send('Ups faltan datos para realizar esta operacion')
       return
     }
-    const result = await serviceCourses.registerAttendanceCourse({ studentId, chapterId, date, status })
+    const result = await serviceCourses.registerAttendanceCourse({ studentId, chapterId, date })
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })
       return
     }
-    res.status(200).send({ message: 'Se ha registrado tu asistencia a este capitulo' })
+
+    res.status(200).send({ message: 'Se ha registrado tu asistencia a este capitulo', result })
+  } catch (e) {
+    console.log(e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
+
+exports.deleteAttendanceCourse = async (req, res) => {
+  try {
+    const { attenId } = req.params
+    if (!attenId) {
+      res.status(400).send('Ups faltan datos para realizar esta operacion')
+      return
+    }
+    const result = await serviceCourses.deleteAttendanceCourse(attenId)
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send({ message: 'Se ha eliminado esta asistencia' })
+  } catch (e) {
+    console.log(e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
+
+exports.enrrollNoUsersInCourse = async (req, res) => {
+  try {
+    console.log('req.body', req.body)
+    const { courseId, personId } = req.body
+    if (!courseId || !personId) {
+      res.status(400).send('Ups faltan datos para realizar esta operacion')
+      return
+    }
+    const result = await serviceCourses.enrrollNoUsersInCourse({ courseId, personId })
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send({ message: 'Se ha inscrito exitosamente a este curso', result })
+  } catch (e) {
+    console.log(e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
+
+exports.stadisticAttendanceCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params
+    if (!courseId) {
+      res.status(400).send('Ups faltan datos para realizar esta operacion')
+      return
+    }
+    const result = await serviceCourses.stadisticAttendanceCourse(courseId)
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send(result)
+  } catch (e) {
+    console.log(e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
+
+exports.evaluateStudent = async (req, res) => {
+  try {
+    const { status } = req.body
+    const studentId = req.params.studentId
+    console.log('req.body', req.body)
+    console.log('studentId', studentId)
+    if (!status || !studentId) {
+      res.status(400).send('Faltan datos para realizar esta operacion')
+      return
+    }
+    const result = await serviceCourses.evaluateStudent({ status, studentId })
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send({ message: 'Se ha evaluado exitosamente al estudiante', result })
   } catch (e) {
     console.log(e)
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)

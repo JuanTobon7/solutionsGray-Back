@@ -21,7 +21,7 @@ db.query('SELECT NOW()', (err, res) => {
 })
 
 // Token for API authorization
-const token = '1312|2jxyGMP7WdWI1o9CymwRXMVrpFeylkinv0oqymfQ' // Reemplaza con tu token de acceso
+const token = '' // Reemplaza con tu token de acceso
 
 async function getCountries () {
   const result = await db.query('SELECT id, name FROM countries;')

@@ -4,7 +4,6 @@ exports.up = async function (knex) {
     table.string('student_id', 40).references('id').inTable('students_courses').notNullable().onDelete('CASCADE')
     table.string('chapter_id', 40).references('id').inTable('chapters_courses').notNullable().onDelete('CASCADE')
     table.timestamp('date', { useTz: true }).notNullable()
-    table.string('status', 40).notNullable()
   })
 }
 
