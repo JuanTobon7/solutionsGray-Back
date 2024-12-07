@@ -89,7 +89,7 @@ module.exports = function (passport) {
   router.get('/church', churchController.getChurchInfo)
   router.get('/servants', superAdmin, defaultMinisteries.getServants)
   router.get('/courses', superAdmin, courseController.getCourses)
-  router.get('/average-rating-servants/:typeServiceId', superAdmin, defaultMinisteries.getAverageRating)
+  router.get('/average-rating-servants/:typeServiceId', superAdmin, defaultMinisteries.getServantsAverageRating)
   router.get('/average-rating-by-servant/:servantId', superAdmin, defaultMinisteries.getAverageRatingByServant)
   // pastor endpoints
   router.post('/create-church', pastor, churchController.createChurches) // ok
