@@ -298,10 +298,10 @@ exports.getAverageRatingByServant = async (data) => {
       AVG(rt.rating) AS average_rating,
       rs.name AS rol_servant
     FROM rating_services rt
-    JOIN services sr ON rt.service_id = sr.id
-    JOIN roles_services rs ON sr.rol_servant_id = rs.id
-    JOIN people p ON sr.servant_id = p.id
-    JOIN events e ON sr.event_id = e.id
+    LEFT JOIN services sr ON rt.service_id = sr.id
+    LEFT JOIN roles_services rs ON sr.rol_servant_id = rs.id
+    LEFT JOIN people p ON sr.servant_id = p.id
+    LEFT JOIN events e ON sr.event_id = e.id
     WHERE sr.servant_id = $1
     GROUP BY sr.servant_id;
   `
