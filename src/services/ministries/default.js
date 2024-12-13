@@ -235,7 +235,8 @@ exports.updateAssignedService = async (data) => {
 }
 
 exports.checkQualified = async (data) => {
-  const query = `
+  console.log('here here here', data)
+  let query = `
     SELECT
       rt.rating,
       rt.person_qualifier_id
@@ -243,11 +244,25 @@ exports.checkQualified = async (data) => {
     JOIN services sr ON rt.service_id = sr.id
     JOIN events e ON sr.event_id = e.id
     JOIN people p ON rt.person_qualifier_id = p.id
-    WHERE sr.servant_id = $1 AND e.id = $2;
+    WHERE sr.servant_id = $1 AND e.date = 
+      (SELECT MAX(e.date) FROM events e WHERE e.church_id = $2) AND group_id IS NULL
+    ;
   `
-  const result = await db.query(query, [data.userId, data.eventId])
+  let result = await db.query(query, [data.userId, data.churchId])
+
+  console.log('result in checkQualified: ', result.rows)
   if (result.rows.length === 0) {
-    return new Error('No ha calificado')
+    console.log('aqui toi en error')
+    query = `
+    SELECT
+     e.id
+    FROM events e
+    WHERE e.date = (SELECT MAX(e.date) FROM events e WHERE e.church_id = $1) AND e.group_id IS NULL
+    AND e.church_id = $1;
+  `
+    result = await db.query(query, [data.churchId])
+    console.log('result in checkQualified: ', result.rows[0].id)
+    return new Error(`${result.rows[0].id}`)
   }
   return result.rows[0]
 }
@@ -277,12 +292,13 @@ exports.getAverageRating = async (data) => {
   const query = `
     SELECT
       AVG(rt.rating) AS average_rating,
+      COUNT(sr.servant_id) AS cuantity_services,
       sr.servant_id
     FROM rating_services rt
     JOIN services sr ON rt.service_id = sr.id
     JOIN people p ON sr.servant_id = p.id
     JOIN events e ON sr.event_id = e.id
-    WHERE e.rol_servant_id = $1 AND p.church_id = $2
+    WHERE sr.rol_servant_id= $1 AND p.church_id = $2
     GROUP BY sr.servant_id;
   `
   const result = await db.query(query, [data.typeServiceId, data.churchId])
