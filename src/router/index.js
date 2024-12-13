@@ -54,7 +54,7 @@ module.exports = function (passport) {
   router.get('/get-types-contributions', financeController.getTypesContributions) // review
   router.get('/get-attendance/:eventId', defaultMinisteries.getAttendance) // ok
   router.delete('/delete-attendance/:personId/:eventId', defaultMinisteries.deleteAttendance)
-  router.get('/check-qualified/:eventId', defaultMinisteries.checkQualified)
+  router.get('/check-qualified', defaultMinisteries.checkQualified)
   router.post('/qualify-service', defaultMinisteries.qualifyService)
 
   // admin endpoints
