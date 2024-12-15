@@ -245,17 +245,17 @@ exports.deleteAssignedService = async (req, res) => {
   }
 }
 
-exports.checkQualified = async (req, res) => {
+exports.checkQualified = async (req, res) => { // INTENTANDO HACER SIN EVENTID
   try {
     const userId = req.user.id
-    const { eventId } = req.params
-    if (!userId || !eventId) {
+    const churchId = req.user.churchId
+    if (!userId || !churchId) {
       res.status(400).send('Ups faltan datos para esta operacion')
       return
     }
-    const result = await serviceDefault.checkQualified({ userId, eventId })
+    const result = await serviceDefault.checkQualified({ userId, churchId })
     if (result instanceof Error) {
-      res.status(400).send({ message: result.message })
+      res.status(400).send({ message: 'No ha calificado', id: result.message })
       return
     }
     res.status(200).send({ message: 'Califico', result })
@@ -267,6 +267,7 @@ exports.checkQualified = async (req, res) => {
 
 exports.qualifyService = async (req, res) => {
   try {
+    console.log('req.body', req.body)
     const { serviceId, qualification } = req.body
     const userId = req.user.id
     if (!userId || !serviceId || !qualification) {
