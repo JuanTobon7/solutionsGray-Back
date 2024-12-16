@@ -342,3 +342,31 @@ exports.evaluateStudent = async (data) => {
   }
   return result.rows[0]
 }
+
+exports.getPeopleCourses = async (personId) => {
+  const query = `
+  SELECT 
+  c.name,
+  st.status
+  FROM students_courses st
+  JOIN teachers_courses tc ON st.teachers_courses_id = tc.id
+  JOIN courses c ON tc.course_id = c.id
+  WHERE st.student_id = $1;
+  `
+  const result = await db.query(query, [personId])
+  if (result.rows.length === 0) {
+    return new Error('Ups no pudimos obtener los cursos')
+  }
+  return result.rows
+}
+
+exports.finishCourse = async (courseId) => {
+  const query = `
+    UPDATE teachers_courses SET status = 'Finalizado' WHERE id = $1 RETURNING *;
+  `
+  const result = await db.query(query, [courseId])
+  if (result.rows.length === 0) {
+    return new Error('Ups algo fallo al finalizar el curso')
+  }
+  return result.rows[0]
+}
