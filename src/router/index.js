@@ -35,8 +35,10 @@ module.exports = function (passport) {
   router.get('/get-schedules-courses/:courseId', courseController.getShedulesCourses)
   router.get('/get-chapters-courses/:courseId', courseController.getChaptersCourses)
   router.get('/get-my-courses', courseController.getMyCourses)
+  router.get('/get-people-courses/:personId', courseController.getPeopleCourses)
   router.post('/register-attendance', defaultMinisteries.registerAttends) // ok
   router.get('/get-courses', courseController.getCourses)
+  router.put('/finish-course/:courseId', courseController.finishCourse)
   router.get('/my-sheeps', sheepsController.getMySheeps) // esto se puede borrar para ahorrar codigo, ya hay getSheep by Servant
   router.post('/register-visits', sheepsController.resgisterVisits) // ok
   router.get('/services', defaultMinisteries.getRolesServices) // ok
@@ -58,6 +60,7 @@ module.exports = function (passport) {
   router.post('/qualify-service', defaultMinisteries.qualifyService)
 
   // admin endpoints
+  router.get('/get-rating-by-servant/:servantId', admin, defaultMinisteries.getRatingByServant)
   router.post('/register-sheeps', admin, sheepsController.registerSheeps) // ok
   router.get('/get-people', admin, defaultPeopleController.getPeople) // estoy puede ir en defaultController
   router.post('/register-visits', admin, sheepsController.resgisterVisits) // review ok
@@ -140,7 +143,7 @@ async function admin (req, res, next) {
 
 async function superAdmin (req, res, next) {
   console.log('req superadmin: ', req.user)
-  if (!req.user || req.user.rol_name === 'User' || req.user.rol_name === 'Admin') {
+  if (!req.user || req.user.rolName === 'User' || req.user.rolName === 'Admin') {
     console.log('funcion Superadmin', req.user)
     return res.status(401).send('No tienes los permisos here')
   }
