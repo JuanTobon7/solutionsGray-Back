@@ -347,3 +347,22 @@ exports.getRatingByServant = async (servantId) => {
   }
   return result.rows
 }
+
+exports.getMyServices = async (data) => {
+  const query = `
+    SELECT 
+      e.date,
+      e.description,
+      rs.name AS rol_servant
+    FROM services sr
+    JOIN roles_services rs ON sr.rol_servant_id = rs.id
+    JOIN events e ON sr.event_id = e.id
+    WHERE sr.servant_id = $1 AND e.date >= $2
+    ORDER BY e.date DESC;
+  `
+  const result = await db.query(query, [data.servantId, data.date])
+  if (result.rows.length === 0) {
+    return new Error('No hay servicios asignados')
+  }
+  return result.rows
+}

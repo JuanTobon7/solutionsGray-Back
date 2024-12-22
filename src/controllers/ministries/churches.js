@@ -98,7 +98,14 @@ exports.createWorshipServices = async (req, res) => {
 exports.getWorshipServices = async (req, res) => {
   try {
     const churchId = req.user.churchId
-    const result = await serviceChurch.getWorshipServices(churchId)
+    const { minDate, maxDate } = req.params
+    if (!churchId || !minDate || !maxDate) {
+      res.status(400).send('No podemos hallar la informacion de la iglesia a la que asistes')
+      return
+    }
+    console.log('minDate', minDate)
+    console.log('maxDate', maxDate)
+    const result = await serviceChurch.getWorshipServices({ churchId, minDate, maxDate })
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })
       return
@@ -136,19 +143,38 @@ exports.updateWorshipService = async (req, res) => {
   }
 }
 
-exports.getChurchInfo = async (req, res) => {
+exports.getStadisticPeopleChurch = async (req, res) => {
   try {
     const { churchId } = req.user
-    if (!churchId) {
+    const { minDate, maxDate } = req.params
+    if (!churchId || !minDate || !maxDate) {
       throw new Error('No podemos hallar la informacion de la iglesia a la que asistes')
     }
-    console.log('churchId', churchId)
-    const result = await serviceChurch.getChurchInfo(churchId)
+    const result = await serviceChurch.getStadisticPeopleChurch({ churchId, minDate, maxDate })
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })
       return
     }
+    res.status(200).send(result)
+  } catch (e) {
+    console.log('error:', e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
 
+exports.getStadisticAssistance = async (req, res) => {
+  try {
+    const { churchId } = req.user
+    const { minDate, maxDate } = req.params
+    console.log('date', minDate, maxDate)
+    if (!churchId) {
+      throw new Error('No podemos hallar la informacion de la iglesia a la que asistes')
+    }
+    const result = await serviceChurch.getStadisticAssistance({ churchId, minDate, maxDate })
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
     res.status(200).send(result)
   } catch (e) {
     console.log('error:', e)

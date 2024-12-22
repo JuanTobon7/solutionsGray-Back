@@ -32,8 +32,12 @@ module.exports = function (passport) {
   // user endpoints
   router.get('/get-countries', defaultController.getCountries)
   router.use(state)
+  router.get('/get-stadistics-people-church/:minDate/:maxDate', churchController.getStadisticPeopleChurch)
+  router.get('/get-stadistics-people-course/:minDate/:maxDate', courseController.getStadisticsPeopleCourse)
   router.get('/get-schedules-courses/:courseId', courseController.getShedulesCourses)
+  router.get('/my-services/:date', defaultMinisteries.getMyServices) // ok
   router.get('/get-chapters-courses/:courseId', courseController.getChaptersCourses)
+  router.get('/get-stadistic-assitance-church/:minDate/:maxDate', churchController.getStadisticAssistance)
   router.get('/get-my-courses', courseController.getMyCourses)
   router.get('/get-people-courses/:personId', courseController.getPeopleCourses)
   router.post('/register-attendance', defaultMinisteries.registerAttends) // ok
@@ -44,7 +48,7 @@ module.exports = function (passport) {
   router.get('/services', defaultMinisteries.getRolesServices) // ok
   router.get('/get-visits/:sheepId', sheepsController.getVisits)
   router.get('/basic-info-user', userController.basicInfo) // ok
-  router.get('/worship-services', churchController.getWorshipServices) // ok
+  router.get('/worship-services/:minDate/:maxDate', churchController.getWorshipServices) // ok
   router.post('/save-people', defaultPeopleController.savePeople) // ok
   router.post('/shedule-courses', courseController.sheduleCourses)
   router.get('/get-courses-in-charge', admin, courseController.getCoursesInCharge)
@@ -89,7 +93,6 @@ module.exports = function (passport) {
   router.post('/assing-courses', superAdmin, courseController.assignCourses) // remember send an Email
   router.post('/save-shedules-courses', superAdmin, courseController.saveShedulesCourses) // ok
   router.post('/invitation-boarding', superAdmin, controllerAuth.createInvitationBoarding) // ok
-  router.get('/church', churchController.getChurchInfo)
   router.get('/servants', superAdmin, defaultMinisteries.getServants)
   router.get('/courses', superAdmin, courseController.getCourses)
   router.get('/average-rating-servants/:typeServiceId', superAdmin, defaultMinisteries.getServantsAverageRating)

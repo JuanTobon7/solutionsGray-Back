@@ -66,13 +66,13 @@ exports.createWorshipServices = async (data) => {
   }
 }
 
-exports.getWorshipServices = async (churchId) => {
+exports.getWorshipServices = async (data) => {
   const query = `
     SELECT e.*,tws.name as worship_name FROM events e
     LEFT JOIN types_whorship_service tws 
     ON tws.id = e.worship_service_type_id
-    WHERE church_id = $1;`
-  const result = await db.query(query, [churchId])
+    WHERE church_id = $1 AND e.date BETWEEN $2 AND $3;`
+  const result = await db.query(query, [data.churchId, data.minDate, data.maxDate])
   if (result.rows.length === 0) {
     return new Error('No hay cultos programados')
   }
@@ -100,8 +100,7 @@ exports.updateWorshipService = async (data, date) => {
   return result.rows[0]
 }
 
-exports.getChurchInfo = async (churchId) => {
-  console.log(`churchId: ${churchId}`)
+exports.getStadisticPeopleChurch = async (data) => {
   const query = `
      SELECT 
         ch.name,
@@ -113,17 +112,47 @@ exports.getChurchInfo = async (churchId) => {
         SUM(CASE WHEN tp.name = 'Nuevo' THEN 1 ELSE 0 END) AS countNuevo,
         SUM(CASE WHEN tp.name = 'Oveja' THEN 1 ELSE 0 END) AS countOveja
     FROM churches ch
-    LEFT JOIN people p ON ch.id = p.church_id
+    JOIN (
+        SELECT DISTINCT e.church_id
+        FROM events e
+        WHERE e.date BETWEEN $2 AND $3
+    ) filtered_events ON filtered_events.church_id = ch.id
+    JOIN people p ON ch.id = p.church_id
+    JOIN types_people tp ON p.type_person_id = tp.id
     LEFT JOIN group_churches g ON ch.id = g.church_id
-    LEFT JOIN types_people tp ON p.type_person_id = tp.id
     WHERE ch.id = $1
     GROUP BY ch.name, ch.address, ch.state_id;
 
   `
-  const result = await db.query(query, [churchId])
+  const result = await db.query(query, [data.churchId, data.minDate, data.maxDate])
   if (result.rows.length === 0) {
     return new Error('No hay informacion que mostrar')
   }
-  console.log('resultado de church', result.rows[0])
   return result.rows[0]
+}
+
+exports.getStadisticAssistance = async (data) => {
+  const query = `
+    SELECT
+        TO_CHAR(e.date, 'YYYY-MM') AS month,
+        COUNT(a.id) AS attendance_count
+    FROM
+        events e
+    JOIN
+        attendees a ON e.id = a.event_id
+    WHERE
+        e.church_id = $1 AND
+        e.date BETWEEN $2 AND $3
+    GROUP BY
+        TO_CHAR(e.date, 'YYYY-MM')
+    ORDER BY
+        month;
+
+  `
+  const result = await db.query(query, [data.churchId, data.minDate, data.maxDate])
+  if (result.rows.length === 0) {
+    return new Error('No hay informacion que mostrar')
+  }
+  console.log('result in getStadisticAssistance: ', result.rows)
+  return result.rows
 }

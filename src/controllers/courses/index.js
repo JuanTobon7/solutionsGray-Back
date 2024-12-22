@@ -386,3 +386,23 @@ exports.finishCourse = async (req, res) => {
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
+
+exports.getStadisticsPeopleCourse = async (req, res) => {
+  try {
+    const { churchId } = req.user
+    const { minDate, maxDate } = req.params
+    if (!churchId || !minDate || !maxDate) {
+      res.status(400).send('Ups faltan datos para realizar esta operacion')
+      return
+    }
+    const result = await serviceCourses.getStadisticsPeopleCourse({ churchId, minDate, maxDate })
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send(result)
+  } catch (e) {
+    console.log(e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
