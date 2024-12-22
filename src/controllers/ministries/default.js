@@ -343,3 +343,24 @@ exports.getRatingByServant = async (req, res) => {
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
+
+exports.getMyServices = async (req, res) => {
+  try {
+    const { id: servantId } = req.user
+    console.log('req.body in getMyServices', req.params)
+    const { date } = req.params
+    if (!servantId || !date) {
+      res.status(400).send('Ups faltan datos para esta operacion')
+      return
+    }
+    const result = await serviceDefault.getMyServices({ servantId, date })
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send(result)
+  } catch (e) {
+    console.log(e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}

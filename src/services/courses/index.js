@@ -370,3 +370,31 @@ exports.finishCourse = async (courseId) => {
   }
   return result.rows[0]
 }
+
+exports.getStadisticsPeopleCourse = async (data) => {
+  console.log('data', data)
+  const query = `
+    SELECT
+        COUNT(DISTINCT st.student_id) AS quantity_students,
+        COUNT(DISTINCT tc.teacher_id) AS quantity_teachers,
+        (
+        SELECT COUNT(DISTINCT(st.id)) FROM students_courses st 
+        JOIN people p ON st.student_id = p.id        
+        WHERE st.status = 'Aprobado' OR st.status = 'En Proceso'
+        AND p.church_id = $1
+        ) AS quantity_active_students      
+    FROM students_courses st
+    JOIN teachers_courses tc ON st.teachers_courses_id = tc.id
+    JOIN courses c ON tc.course_id = c.id
+    JOIN chapters_courses ch ON c.id = ch.course_id
+    JOIN students_attendance sa ON sa.chapter_id = ch.id
+    WHERE c.church_id = $1 AND sa.date BETWEEN $2 AND $3;
+     
+  `
+  const result = await db.query(query, [data.churchId, data.minDate, data.maxDate])
+  console.log('result getStadisticsPeopleCourse', result.rows)
+  if (result.rows[0].quantity_students === '0') {
+    return new Error('No hay informacion que mostrar')
+  }
+  return result.rows[0]
+}
