@@ -247,13 +247,14 @@ exports.deleteAssignedService = async (req, res) => {
 
 exports.checkQualified = async (req, res) => { // INTENTANDO HACER SIN EVENTID
   try {
-    const userId = req.user.id
-    const churchId = req.user.churchId
-    if (!userId || !churchId) {
+    const { id: userId, churchId } = req.user
+    const { date } = req.params
+    console.log('date in CheckQUalified', date)
+    if (!userId || !churchId || !date) {
       res.status(400).send('Ups faltan datos para esta operacion')
       return
     }
-    const result = await serviceDefault.checkQualified({ userId, churchId })
+    const result = await serviceDefault.checkQualified({ userId, churchId, date })
     if (result instanceof Error) {
       res.status(400).send({ message: 'No ha calificado', id: result.message })
       return

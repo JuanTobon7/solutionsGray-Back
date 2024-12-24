@@ -8,6 +8,7 @@ module.exports = function (passport) {
   const sheepsController = require('../controllers/people/sheeps/index')
   const financeController = require('../controllers/finances/index')
   const courseController = require('../controllers/courses')
+  const groupsController = require('../controllers/ministries/groups')
   const userController = require('../controllers/user')
   const defaultPeopleController = require('../controllers/people/default')
   const router = express.Router()
@@ -38,6 +39,8 @@ module.exports = function (passport) {
   router.get('/my-services/:date', defaultMinisteries.getMyServices) // ok
   router.get('/get-chapters-courses/:courseId', courseController.getChaptersCourses)
   router.get('/get-stadistic-assitance-church/:minDate/:maxDate', churchController.getStadisticAssistance)
+  router.post('/create-groups', groupsController.createGroups)
+  router.get('/get-groups', groupsController.getGroups)
   router.get('/get-my-courses', courseController.getMyCourses)
   router.get('/get-people-courses/:personId', courseController.getPeopleCourses)
   router.post('/register-attendance', defaultMinisteries.registerAttends) // ok
@@ -60,7 +63,7 @@ module.exports = function (passport) {
   router.get('/get-types-contributions', financeController.getTypesContributions) // review
   router.get('/get-attendance/:eventId', defaultMinisteries.getAttendance) // ok
   router.delete('/delete-attendance/:personId/:eventId', defaultMinisteries.deleteAttendance)
-  router.get('/check-qualified', defaultMinisteries.checkQualified)
+  router.get('/check-qualified/:date', defaultMinisteries.checkQualified)
   router.post('/qualify-service', defaultMinisteries.qualifyService)
 
   // admin endpoints

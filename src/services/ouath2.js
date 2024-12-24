@@ -85,8 +85,9 @@ exports.singIn = async (email, password) => {
     console.log('email: ', email)
     console.log('password: ', password)
     const query = `
-            SELECT p.*,s.password,r.name as rol_name  FROM users s
+            SELECT p.*,s.password,r.name as rol_name,c.name as church_name  FROM users s
             LEFT JOIN people p ON p.id = s.person_id
+            JOIN churches c ON c.id = p.church_id
             JOIN user_role r ON r.id = s.rol_user_id
             WHERE p.email = $1;
         `
