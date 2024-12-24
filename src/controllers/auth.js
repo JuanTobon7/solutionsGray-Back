@@ -131,7 +131,8 @@ exports.sigIn = async (req, res) => {
     const userData = {
       name: result.first_name + ' ' + result.last_name,
       email: result.email,
-      rol: result.rol_name
+      rol: result.rol_name,
+      churchName: result.church_name
     }
     const response = {
       ...userData,

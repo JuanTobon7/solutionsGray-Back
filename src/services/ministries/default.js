@@ -235,7 +235,7 @@ exports.updateAssignedService = async (data) => {
 }
 
 exports.checkQualified = async (data) => {
-  console.log('here here here', data)
+  console.log('here here here in checkQualified', data)
   let query = `
     SELECT
       rt.rating,
@@ -245,12 +245,12 @@ exports.checkQualified = async (data) => {
     JOIN events e ON sr.event_id = e.id
     JOIN people p ON rt.person_qualifier_id = p.id
     WHERE rt.person_qualifier_id = $1 AND e.date = 
-      (SELECT MAX(e.date) FROM events e WHERE e.church_id = $2) AND group_id IS NULL
+      (SELECT MAX(e.date) FROM events e WHERE e.church_id = $2 AND e.date <= $3) AND group_id IS NULL
     ;
   `
-  let result = await db.query(query, [data.userId, data.churchId])
+  let result = await db.query(query, [data.userId, data.churchId, data.date])
 
-  console.log('result in checkQualified: ', result.rows)
+  console.log('result in checkQualified hello: ', result.rows)
   if (result.rows.length === 0) {
     console.log('aqui toi en error')
     query = `
@@ -353,10 +353,12 @@ exports.getMyServices = async (data) => {
     SELECT 
       e.date,
       e.description,
+      tp.name AS type_service,
       rs.name AS rol_servant
     FROM services sr
     JOIN roles_services rs ON sr.rol_servant_id = rs.id
     JOIN events e ON sr.event_id = e.id
+    JOIN types_whorship_service tp ON e.worship_service_type_id = tp.id
     WHERE sr.servant_id = $1 AND e.date >= $2
     ORDER BY e.date DESC;
   `
