@@ -30,3 +30,20 @@ exports.getGroups = async (req, res) => {
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
+
+exports.registerServantsStrategies = async (req, res) => {
+  try {
+    console.log('req.body in registerServantsStrategies', req.body)
+    const { servantId, rolName, leaderId } = req.body
+    if (!servantId || !rolName || !leaderId) {
+      return res.status(400).send({ message: 'Faltan datos' })
+    }
+    const response = await serviceGroups.registerServantsStrategies({ servantId, rolName, leaderId })
+    if (response instanceof Error) {
+      return res.status(400).send({ message: response.message })
+    }
+    res.status(200).send(response)
+  } catch (e) {
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
