@@ -2,13 +2,13 @@ const serviceGroups = require('../../services/ministries/groups')
 
 exports.createGroups = async (req, res) => {
   try {
-    const { latitude, longitude, name, leaderId } = req.body
+    const { latitude, longitude, name, leaderId, strategyName, description } = req.body
     const { churchId } = req.user
     console.log('here data in controller', req.body)
-    if (!latitude || !longitude || !name || !leaderId) {
+    if (!latitude || !longitude || !name || !leaderId || !strategyName) {
       return res.status(400).send({ message: 'Faltan datos' })
     }
-    const response = await serviceGroups.createGroups({ latitude, longitude, name, leaderId, churchId })
+    const response = await serviceGroups.createGroups({ latitude, longitude, name, leaderId, churchId, strategyName, description })
     if (response instanceof Error) {
       return res.status(400).send({ message: response.message })
     }
@@ -31,14 +31,59 @@ exports.getGroups = async (req, res) => {
   }
 }
 
-exports.registerServantsStrategies = async (req, res) => {
+exports.getMyInfoGroup = async (req, res) => {
   try {
-    console.log('req.body in registerServantsStrategies', req.body)
-    const { servantId, rolName, leaderId } = req.body
-    if (!servantId || !rolName || !leaderId) {
+    const id = req.user.id
+    const response = await serviceGroups.getMyInfoGroup(id)
+    if (response instanceof Error) {
+      return res.status(400).send({ message: response.message })
+    }
+    res.status(200).send(response)
+  } catch (e) {
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
+
+exports.getMyGroup = async (req, res) => {
+  try {
+    const id = req.params.groupId
+    if (!id) {
       return res.status(400).send({ message: 'Faltan datos' })
     }
-    const response = await serviceGroups.registerServantsStrategies({ servantId, rolName, leaderId })
+    const response = await serviceGroups.getMyGroup(id)
+    if (response instanceof Error) {
+      return res.status(400).send({ message: response.message })
+    }
+    res.status(200).send(response)
+  } catch (e) {
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
+
+exports.addPersonStrategie = async (req, res) => {
+  try {
+    const { personId, strategyId, rol, groupId } = req.body
+    if (!personId || !strategyId || !rol || !groupId) {
+      return res.status(400).send({ message: 'Faltan datos' })
+    }
+    const leaderId = req.body.leaderId || ''
+    const response = await serviceGroups.addPersonStrategie({ personId, strategyId, rol, groupId, leaderId })
+    if (response instanceof Error) {
+      return res.status(400).send({ message: response.message })
+    }
+    res.status(200).send(response)
+  } catch (e) {
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
+
+exports.getStrategyById = async (req, res) => {
+  try {
+    const { strategyId } = req.params
+    if (!strategyId) {
+      return res.status(400).send({ message: 'Faltan datos' })
+    }
+    const response = await serviceGroups.getStrategyById(strategyId)
     if (response instanceof Error) {
       return res.status(400).send({ message: response.message })
     }
