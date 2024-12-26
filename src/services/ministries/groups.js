@@ -18,13 +18,14 @@ exports.createGroups = async (data) => {
   if (result.rows.length === 0) {
     return new Error('Error al crear el grupo')
   }
-
+  const strategyId = uuidv4()
   query = 'INSERT INTO strategies (id,name,group_id) VALUES ($1,$2,$3) RETURNING *'
-  result = await db.query(query, [uuidv4(), data.strategyName, id])
-  if (result.rows.length === 0) {
+  const response = await db.query(query, [strategyId, data.strategyName, id])
+  if (response.rows.length === 0) {
     return new Error('Error al crear el grupo')
   }
-  return { ...result.rows[0], groupId: id }
+
+  return { ...response.rows[0], groupId: id }
 }
 
 exports.getGroups = async (churchId) => {
@@ -48,7 +49,7 @@ exports.getMyInfoGroup = async (id) => {
         s.id as strategy_id 
     FROM group_churches g
     JOIN strategies s ON g.id = s.group_id
-    WHERE g.id = (SELECT group_id FROM group_integrants WHERE person_id = $1)
+    WHERE g.id = (SELECT group_id FROM group_integrants WHERE person_id = $1 LIMIT 1)
   `
   const result = await db.query(query, [id])
   if (result.rows.length === 0) {
@@ -60,6 +61,7 @@ exports.getMyInfoGroup = async (id) => {
 exports.getMyGroup = async (id) => {
   const query = `
     SELECT 
+        p.id,
         p.first_name, 
         p.last_name, 
         p.phone, 
