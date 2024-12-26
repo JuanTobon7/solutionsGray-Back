@@ -1,9 +1,14 @@
 const neo4j = require('neo4j-driver')
 
-const graphDb = async () => {
+// Variables globales para la sesión y el driver
+let driver
+let session
+
+// Función para inicializar la conexión
+const initializeConnection = async () => {
   const URI = process.env.DB_GRAFO_URI
-  const driver = neo4j.driver(URI, neo4j.auth.basic(process.env.GRAFO_USER, process.env.GRAFO_PASSWORD))
-  const session = driver.session()
+  driver = neo4j.driver(URI, neo4j.auth.basic(process.env.GRAFO_USER, process.env.GRAFO_PASSWORD))
+  session = driver.session()
 
   try {
     const result = await session.run('RETURN datetime() AS currentDateTime')
@@ -12,10 +17,17 @@ const graphDb = async () => {
     })
   } catch (err) {
     console.log(`Connection error\n${err}\nCause: ${err.cause}`)
-  } finally {
-    await session.close()
-    await driver.close()
   }
 }
 
-module.exports = graphDb
+// Función para obtener la sesión activa
+const getSession = () => {
+  if (!session) {
+    console.log('La conexión a Neo4j no ha sido inicializada.')
+    throw new Error('La conexión a Neo4j no ha sido inicializada.')
+  }
+  return session
+}
+
+// Exportamos la inicialización y la sesión
+module.exports = { initializeConnection, getSession }

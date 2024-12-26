@@ -40,6 +40,8 @@ module.exports = function (passport) {
   router.get('/get-chapters-courses/:courseId', courseController.getChaptersCourses)
   router.get('/get-stadistic-assitance-church/:minDate/:maxDate', churchController.getStadisticAssistance)
   router.post('/create-groups', groupsController.createGroups)
+  router.get('/get-my-info-group', groupsController.getMyInfoGroup)
+  router.get('/get-group/:groupId', groupsController.getMyGroup)
   router.get('/get-groups', groupsController.getGroups)
   router.get('/get-my-courses', courseController.getMyCourses)
   router.get('/get-people-courses/:personId', courseController.getPeopleCourses)
@@ -78,10 +80,11 @@ module.exports = function (passport) {
   router.get('/get-attendance-course/:courseId', admin, courseController.getAttendanceCourse)
   router.post('/register-attendance-course', admin, courseController.registerAttendanceCourse)
   router.post('/register-nouser-course', admin, courseController.enrrollNoUsersInCourse)
+  router.post('/add-person-strategy', admin, groupsController.addPersonStrategie)
+  router.get('/get-strategy/:strategyId', admin, groupsController.getStrategyById)
   router.delete('/delete-attendance-course/:attenId', admin, courseController.deleteAttendanceCourse)
   router.get('/stadistic-attendance-course/:courseId', admin, courseController.stadisticAttendanceCourse)
   router.put('/evaluate-student/:studentId', admin, courseController.evaluateStudent)
-  router.post('/register-servant-strategies', admin, groupsController.registerServantsStrategies)
   // super admin endpoints
   router.get('/types-worship-services', superAdmin, churchController.getTypesWorshipServices) // ok
   router.get('/assigned-services/:id', superAdmin, defaultMinisteries.getServices) // ok
