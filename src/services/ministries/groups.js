@@ -143,3 +143,16 @@ exports.getStrategyById = async (strategyId) => {
     return new Error('Error al obtener personas con estrategia')
   }
 }
+
+exports.getAttendanceGroup = async (data) => {
+  const query = `
+    SELECT e.id,e.date,a.person_id FROM events e
+    JOIN attendees a ON e.id = a.event_id
+    WHERE e.group_id = $1 AND e.date = $2
+  `
+  const result = await db.query(query, [data.groupId, data.date])
+  if (result.rows.length === 0) {
+    return new Error('No hay asistencias')
+  }
+  return result.rows
+}

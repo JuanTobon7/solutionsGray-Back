@@ -64,6 +64,7 @@ module.exports = function (passport) {
   router.get('/get-currencies', financeController.getCurrency) // ok
   router.get('/get-types-contributions', financeController.getTypesContributions) // review
   router.get('/get-attendance/:eventId', defaultMinisteries.getAttendance) // ok
+  router.get('/get-attendance-group/:groupId/:date', groupsController.getAttendanceGroup)
   router.delete('/delete-attendance/:personId/:eventId', defaultMinisteries.deleteAttendance)
   router.get('/check-qualified/:date', defaultMinisteries.checkQualified)
   router.post('/qualify-service', defaultMinisteries.qualifyService)

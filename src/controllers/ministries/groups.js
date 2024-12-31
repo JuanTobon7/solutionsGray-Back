@@ -92,3 +92,19 @@ exports.getStrategyById = async (req, res) => {
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
+
+exports.getAttendanceGroup = async (req, res) => {
+  try {
+    const { groupId, date } = req.params
+    if (!groupId || !date) {
+      return res.status(400).send({ message: 'Faltan datos' })
+    }
+    const response = await serviceGroups.getAttendanceGroup({ groupId, date })
+    if (response instanceof Error) {
+      return res.status(400).send({ message: response.message })
+    }
+    res.status(200).send(response)
+  } catch (e) {
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
