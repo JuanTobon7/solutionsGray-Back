@@ -64,6 +64,8 @@ module.exports = function (passport) {
   router.get('/get-currencies', financeController.getCurrency) // ok
   router.get('/get-types-contributions', financeController.getTypesContributions) // review
   router.get('/get-attendance/:eventId', defaultMinisteries.getAttendance) // ok
+  router.get('/get-services-group/:groupId/:minDate/:maxDate', groupsController.getServicesGroup)
+  router.get('/get-attendance-group/:groupId/:date', groupsController.getAttendanceGroup)
   router.delete('/delete-attendance/:personId/:eventId', defaultMinisteries.deleteAttendance)
   router.get('/check-qualified/:date', defaultMinisteries.checkQualified)
   router.post('/qualify-service', defaultMinisteries.qualifyService)
@@ -89,6 +91,7 @@ module.exports = function (passport) {
   router.get('/types-worship-services', superAdmin, churchController.getTypesWorshipServices) // ok
   router.get('/assigned-services/:id', superAdmin, defaultMinisteries.getServices) // ok
   router.post('/create-worship-service', superAdmin, churchController.createWorshipServices) // ok
+  router.post('/create-worship-service-group', admin, groupsController.createWorshipServices) // ok
   router.post('/create-rol-servant', superAdmin, defaultMinisteries.createRolesServants)// esto puede ir en defaultMinisteries
   router.post('/assing-services', superAdmin, defaultMinisteries.asignServices) // falta por correo y hacer uno por whattsapp pero más adelante
 

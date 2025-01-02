@@ -143,3 +143,51 @@ exports.getStrategyById = async (strategyId) => {
     return new Error('Error al obtener personas con estrategia')
   }
 }
+
+exports.getAttendanceGroup = async (data) => {
+  const query = `
+    SELECT e.id,e.date,a.person_id FROM events e
+    JOIN attendees a ON e.id = a.event_id
+    WHERE e.group_id = $1 AND e.date = $2
+  `
+  const result = await db.query(query, [data.groupId, data.date])
+  if (result.rows.length === 0) {
+    return new Error('No hay asistencias')
+  }
+  return result.rows
+}
+
+exports.getServicesGroup = async (data) => {
+  const query = `
+    SELECT e.*,tws.name as worship_name FROM events e
+    LEFT JOIN types_whorship_service tws  ON tws.id = e.worship_service_type_id
+    JOIN group_churches g ON e.group_id = g.id
+   
+    WHERE g.id = $1 AND e.date BETWEEN $2 AND $3;`
+  const result = await db.query(query, [data.groupId, data.minDate, data.maxDate])
+  if (result.rows.length === 0) {
+    return new Error('No hay cultos programados')
+  }
+  return result.rows
+}
+
+exports.createWorshipServices = async (data) => {
+  let query, result, id
+  try {
+    do {
+      id = uuidv4()
+      query = 'SELECT * FROM events WHERE id = $1;'
+      result = await db.query(query, [id])
+    } while (result.rows.length > 0)
+    query = 'INSERT INTO events (id,worship_service_type_id,date,group_id,sermon_tittle,description) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *;'
+    console.log('data in createWorshipServices: ', data)
+    result = await db.query(query, [id, data.typeWorshipId, data.userDate, data.groupId, data.sermonTittle, data.description])
+    if (result.rows.length === 0) {
+      return new Error('Ups algo fallo al guardar el culto')
+    }
+    return result.rows[0]
+  } catch (e) {
+    console.log(e)
+    return e
+  }
+}

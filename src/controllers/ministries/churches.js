@@ -95,6 +95,7 @@ exports.createWorshipServices = async (req, res) => {
     res.status(500).send({ message: `Ups, hubo un error: ${e}` })
   }
 }
+
 exports.getWorshipServices = async (req, res) => {
   try {
     const churchId = req.user.churchId
