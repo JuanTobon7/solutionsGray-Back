@@ -32,3 +32,18 @@ exports.basicInfo = async (req, res) => {
     res.status(500).send({ message: 'Error interno del servidor', error: err.message })
   }
 }
+
+exports.getMyProfile = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).send({ message: 'No autorizado' })
+    }
+    const result = await serviceUser.getMyProfile(req.user.id)
+    if (result instanceof Error) {
+      return res.status(500).send({ message: result.message })
+    }
+    res.status(200).send(result)
+  } catch (err) {
+    res.status(500).send({ message: 'Error interno del servidor', error: err.message })
+  }
+}

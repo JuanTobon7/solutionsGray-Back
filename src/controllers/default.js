@@ -35,6 +35,7 @@ exports.savePeople = async (req, res) => {
 exports.sendLead = async (req, res) => {
   try {
     const { churchName, stateId, email, firstName, lastName, phone, personId } = req.body
+    console.log('req.body', req.body)
     if (!churchName || !stateId || !email || !firstName || !lastName || !phone || !personId) {
       res.status(400).send('Datos faltantes')
       return

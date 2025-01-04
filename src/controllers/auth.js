@@ -35,6 +35,7 @@ exports.refreshToken = async (req, res) => {
 
     const durationRefresh = 60 * 60 * 24 * 3 // 3 días
     const newRefreshToken = await ouath2Services.createRefreshToken({
+      refreshTokenId: result.refresh_token_id,
       userId: result.userId,
       created: moment().format('X'),
       expires: durationRefresh
@@ -93,6 +94,25 @@ exports.singUp = async (req, res) => {
   }
 }
 
+exports.setPassword = async (req, res) => {
+  try {
+    const { password, newPassword, personId } = req.body
+    if (!password || !newPassword || !personId) {
+      res.status(400).send({ message: 'Faltan Datos' })
+      return
+    }
+    const result = await ouath2Services.setPassword({ password, newPassword, personId })
+    if (!result) {
+      res.status(500).send({ message: result })
+      return
+    }
+    res.status(200).send({ message: result })
+  } catch (e) {
+    console.error('Error en setPassword: ', e)
+    res.status(500).send({ message: 'Error interno del servidor', error: e.message })
+  }
+}
+
 exports.sigIn = async (req, res) => {
   try {
     console.log('entro a singIn')
@@ -142,6 +162,29 @@ exports.sigIn = async (req, res) => {
     res.status(200).send(response)
   } catch (err) {
     console.error('Error en sigIn: ', err)
+    res.status(500).send({ message: 'Error interno del servidor', error: err.message })
+  }
+}
+
+exports.singOut = async (req, res) => {
+  try {
+    console.log('entro a singOut')
+    console.log('req.cookies: ', req.cookies)
+    const refreshToken = req.cookies.refresh_token
+    if (!refreshToken) {
+      res.status(401).send({ message: 'No tienes permisos' })
+      return
+    }
+    const result = await ouath2Services.deleteRefreshToken(refreshToken)
+    if (result instanceof Error) {
+      res.status(401).send({ message: result.message })
+      return
+    }
+    res.clearCookie('access_token')
+    res.clearCookie('refresh_token')
+    res.status(200).send({ message: 'Cierre de sesión exitoso' })
+  } catch (err) {
+    console.error('Error en singOut: ', err)
     res.status(500).send({ message: 'Error interno del servidor', error: err.message })
   }
 }

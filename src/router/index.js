@@ -24,15 +24,20 @@ module.exports = function (passport) {
 
   router.post('/login', passport.authenticate(['oauth2-client-password'], { session: false }), controllerAuth.sigIn) // ok
   router.post('/refresh-token', passport.authenticate(['rtoken'], { session: false }), controllerAuth.refreshToken) // review
+  router.post('/save-people', passport.authenticate(['oauth2-client-password'], { session: false }), defaultPeopleController.savePeople) // ok
+  router.post('/set-password', passport.authenticate(['oauth2-client-password'], { session: false }), controllerAuth.setPassword) // ok
   // verificará el token enviado al correo de la persona, sea usuario promedio o pastor, enviará una respuesta al front que les permitira crear el usuario.
   // invitate users
   router.post('/create-user', invitateGuest, controllerAuth.singUp) // ok
   router.post('/accept-invitation', invitateGuest, controllerAuth.acceptInvitation) // ok
   router.post('/verify-church-lead', invitateGuest, controllerAuth.verifyChurchLead) // ok
   router.post('/create-users', invitateGuest, controllerAuth.singUp) // ok
+
   // user endpoints
   router.get('/get-countries', defaultController.getCountries)
   router.use(state)
+  router.post('/sing-out', controllerAuth.singOut) // ok
+  router.get('/get-my-profile', userController.getMyProfile) // ok
   router.get('/get-stadistics-people-church/:minDate/:maxDate', churchController.getStadisticPeopleChurch)
   router.get('/get-stadistics-people-course/:minDate/:maxDate', courseController.getStadisticsPeopleCourse)
   router.get('/get-schedules-courses/:courseId', courseController.getShedulesCourses)
@@ -54,7 +59,6 @@ module.exports = function (passport) {
   router.get('/get-visits/:sheepId', sheepsController.getVisits)
   router.get('/basic-info-user', userController.basicInfo) // ok
   router.get('/worship-services/:minDate/:maxDate', churchController.getWorshipServices) // ok
-  router.post('/save-people', defaultPeopleController.savePeople) // ok
   router.post('/shedule-courses', courseController.sheduleCourses)
   router.get('/get-courses-in-charge', admin, courseController.getCoursesInCharge)
   router.get('/get-countries', defaultController.getCountries) // ok
