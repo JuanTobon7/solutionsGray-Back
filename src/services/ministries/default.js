@@ -331,15 +331,14 @@ exports.getAverageRatingByServant = async (data) => {
 exports.getRatingByServant = async (servantId) => {
   const query = `
     SELECT 
-        rs.name AS rol_servant,
-        AVG(rt.rating) AS average_rating,
-        COUNT(rt.rating) AS cuantity_rating
-    FROM services sr
-    LEFT JOIN roles_services rs ON sr.rol_servant_id = rs.id
+      rs.name AS rol_servant,
+      AVG(rt.rating) AS average_rating, 
+      COUNT(rt.rating) AS cuantity_rating
+    FROM roles_services rs
+    LEFT JOIN services sr ON rs.id = sr.rol_servant_id AND sr.servant_id = $1
     LEFT JOIN rating_services rt ON rt.service_id = sr.id
-    WHERE sr.servant_id = $1
-    GROUP BY rs.name ORDER BY average_rating ASC;
-
+    GROUP BY rs.name
+    ORDER BY average_rating ASC;
   `
   const result = await db.query(query, [servantId])
   if (result.rows.length === 0) {
