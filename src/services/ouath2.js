@@ -2,6 +2,12 @@ const db = require('../databases/relationalDB')
 const bcrypt = require('bcrypt')
 const { v4: uuidv4 } = require('uuid')
 
+exports.deleteRefreshToken = async (refreshTokenId) => {
+  const query = 'DELETE FROM refresh_tokens WHERE id = $1 RETURNING *;'
+  const result = await db.query(query, [refreshTokenId])
+  return result.rows[0]
+}
+
 exports.verifyInvitationsLead = async (id) => {
   console.log('id in verifyInvitation and Lead: ', id)
   const query = `
@@ -37,6 +43,7 @@ exports.getInfoFromValidToken = async (rtoken) => {
         p.first_name,
         p.last_name,
         rt.expires_at,
+        rt.id as refresh_token_id,
         r.name as rol_name
         FROM refresh_tokens rt
         LEFT JOIN users s ON s.person_id = rt.user_id
@@ -80,13 +87,36 @@ exports.singUp = async (data) => {
   return 'Usuario Creado Exitosamente'
 }
 
+exports.setPassword = async (data) => {
+  let query, result
+  query = 'SELECT * FROM users WHERE person_id = $1;'
+  result = await db.query(query, [data.personId])
+  if (result.rows.length === 0) {
+    return new Error('Ups no se encontro el usuario')
+  }
+  if (!await bcrypt.compare(data.password, result.rows[0].password)) {
+    return new Error('Ups la contraseña no coincide')
+  }
+  query = `
+        UPDATE users SET password = $1 WHERE person_id = $2 RETURNING *;
+    `
+  const salt = await bcrypt.genSalt(12)
+  const hashedPassword = await bcrypt.hash(data.password, salt)
+  result = await db.query(query, [hashedPassword, data.personId])
+  if (result.rows.length === 0) {
+    return new Error('Ups no se pudo actualizar la contraseña')
+  }
+  return 'Contraseña actualizada'
+}
+
 exports.singIn = async (email, password) => {
   try {
     console.log('email: ', email)
     console.log('password: ', password)
     const query = `
-            SELECT p.*,s.password,r.name as rol_name  FROM users s
+            SELECT p.*,s.password,r.name as rol_name,c.name as church_name  FROM users s
             LEFT JOIN people p ON p.id = s.person_id
+            JOIN churches c ON c.id = p.church_id
             JOIN user_role r ON r.id = s.rol_user_id
             WHERE p.email = $1;
         `
@@ -120,9 +150,12 @@ exports.createRefreshToken = async (data) => {
     result = await db.query('SELECT * FROM refresh_tokens WHERE id = $1', [token])
   } while (result.length > 0)
 
-  const { userId, created, expires } = data
+  const { userId, created, expires, refreshTokenId } = data
+  if (refreshTokenId) {
+    await this.deleteRefreshToken(refreshTokenId)
+  }
   const query = 'INSERT INTO refresh_tokens VALUES($1,$2,$3,$4) RETURNING *;'
-  result = db.query(query, [token, userId, created, expires])
+  result = await db.query(query, [token, userId, created, expires])
 
   return token
 }

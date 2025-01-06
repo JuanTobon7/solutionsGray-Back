@@ -10,7 +10,7 @@ exports.findById = async (id) => {
     pl.email,
     r.name as rol_name,
     pl.church_id as church_id,
-    pl.state_id as state_id,
+    pl.state_id as state_id,    
     c.name as church_name
     FROM users usrs
     JOIN user_role r ON r.id = usrs.rol_user_id
@@ -39,4 +39,30 @@ exports.findById = async (id) => {
     console.log(e)
     return e
   }
+}
+
+exports.getMyProfile = async (id) => {
+  const query = `
+    SELECT
+    p.id,
+    p.first_name,
+    p.last_name,
+    p.avatar,
+    p.email,
+    p.phone,
+    p.birthdate,
+    co.name as country_name,
+    st.name as state_name,
+    c.name as church_name
+    FROM people p    
+    JOIN states st ON st.id = p.state_id
+    JOIN countries co ON co.id = st.country_id
+    LEFT JOIN churches c ON c.id = p.church_id
+    WHERE p.id = $1;
+  `
+  const user = await db.query(query, [id])
+  if (user.rows.length === 0) {
+    return new Error('No estas registrado en el sistema')
+  }
+  return user.rows[0]
 }
