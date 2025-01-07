@@ -139,12 +139,14 @@ exports.sigIn = async (req, res) => {
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
+      samesite: 'localhost',
       maxAge: duration * 1000
     })
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
+      samesite: 'localhost',
       maxAge: durationRefresh * 1000
     })
     console.log('result of singIn: ', result)
