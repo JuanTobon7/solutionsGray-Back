@@ -3,8 +3,8 @@ const jwt = require('jwt-simple')
 
 exports.sendLead = async (data) => {
   try {
-    const query = 'INSERT INTO leads (person_id,church_name) VALUES($1,$2) RETURNING *;'
-    const result = await db.query(query, [data.personId, data.churchName])
+    const query = 'INSERT INTO leads (person_id,church_name,status) VALUES($1,$2,$3) RETURNING *;'
+    const result = await db.query(query, [data.personId, data.churchName, 'Pendiente'])
     if (result.rows.length === 0) {
       return new Error('Algo ha salido mal al guardar la informacion del lead')
     }

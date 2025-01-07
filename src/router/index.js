@@ -11,6 +11,7 @@ module.exports = function (passport) {
   const groupsController = require('../controllers/ministries/groups')
   const userController = require('../controllers/user')
   const defaultPeopleController = require('../controllers/people/default')
+  const controllerAdministrativeApp = require('../controllers/administrativeApp')
   const router = express.Router()
 
   router.get('/', (req, res) => {
@@ -32,9 +33,12 @@ module.exports = function (passport) {
   router.post('/accept-invitation', invitateGuest, controllerAuth.acceptInvitation) // ok
   router.post('/verify-church-lead', invitateGuest, controllerAuth.verifyChurchLead) // ok
   router.post('/create-users', invitateGuest, controllerAuth.singUp) // ok
-
-  // user endpoints
   router.get('/get-countries', defaultController.getCountries)
+
+  // administrativeApp enpoints
+  router.get('/get-leads', controllerAdministrativeApp.getLeads) // ok
+  router.put('/update-lead/:leadId', controllerAdministrativeApp.updateLead) // ok
+  // user endpoints
   router.use(state)
   router.post('/sing-out', controllerAuth.singOut) // ok
   router.get('/get-my-profile', userController.getMyProfile) // ok
