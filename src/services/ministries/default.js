@@ -244,10 +244,15 @@ exports.checkQualified = async (data) => {
     JOIN services sr ON rt.service_id = sr.id
     JOIN events e ON sr.event_id = e.id
     JOIN people p ON rt.person_qualifier_id = p.id
-    WHERE rt.person_qualifier_id = $1 AND e.date = 
-      (SELECT MAX(e.date) FROM events e WHERE e.church_id = $2 AND e.date <= $3) AND group_id IS NULL
-    ;
-  `
+    WHERE rt.person_qualifier_id = $1
+      AND e.church_id = $2
+      AND e.date <= $3
+      AND e.group_id IS NULL
+    GROUP BY rt.rating, rt.person_qualifier_id, e.date
+    HAVING COUNT(e.id) > 1
+    ORDER BY e.date DESC
+    LIMIT 1;
+      `
   let result = await db.query(query, [data.userId, data.churchId, data.date])
 
   console.log('result in checkQualified hello: ', result.rows)
@@ -255,12 +260,19 @@ exports.checkQualified = async (data) => {
     console.log('aqui toi en error')
     query = `
     SELECT
-     e.id
+      e.id
     FROM events e
-    WHERE e.date = (SELECT MAX(e.date) FROM events e WHERE e.church_id = $1) AND e.group_id IS NULL
-    AND e.church_id = $1;
+    WHERE e.church_id = $1
+      AND e.group_id IS NULL
+      AND e.date <= $2
+    ORDER BY e.date DESC
+    LIMIT 1;
+
   `
-    result = await db.query(query, [data.churchId])
+    result = await db.query(query, [data.churchId, data.date])
+    if (result.rows.length === 0) {
+      return 'No hay eventos para calificar'
+    }
     console.log('result in checkQualified: ', result.rows[0].id)
     return new Error(`${result.rows[0].id}`)
   }
