@@ -11,13 +11,8 @@ const app = express() // instancia de express
 const invitationToken = require('../middlewares/invitationToken')
 const cookieParser = require('cookie-parser')
 
-const corsOptions = {
-  origin: 'http://localhost:5173',
-  credentials: true
-}
-
 app.use(helmet()) // modifica cabeceras de seguridad evita XSS, clickjacking...
-app.use(cors(corsOptions)) // habilita peticiones externas
+app.use(cors()) // habilita peticiones externas
 app.use(xss()) // sanitiza las querys
 app.use(cookieParser())
 app.use(express.json())
