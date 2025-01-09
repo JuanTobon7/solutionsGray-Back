@@ -44,13 +44,15 @@ exports.refreshToken = async (req, res) => {
     res.cookie('access_token', accesToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: duration * 2 * 1000
+      maxAge: duration * 2 * 100,
+      samesite: process.env.NODE_ENV === 'production' ? process.env.CLIENT_HOST : 'localhost'
     })
 
     res.cookie('refresh_token', newRefreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: durationRefresh * 1000
+      maxAge: durationRefresh * 1000,
+      samesite: process.env.NODE_ENV === 'production' ? process.env.CLIENT_HOST : 'localhost'
     })
     res.status(200).send({ message: 'Token actualizado' })
   } catch (err) {
@@ -139,13 +141,15 @@ exports.sigIn = async (req, res) => {
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: duration * 1000
+      maxAge: duration * 1000,
+      samesite: process.env.NODE_ENV === 'production' ? process.env.CLIENT_HOST : 'localhost'
     })
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: durationRefresh * 1000
+      maxAge: durationRefresh * 1000,
+      samesite: process.env.NODE_ENV === 'production' ? process.env.CLIENT_HOST : 'localhost'
     })
     console.log('result of singIn: ', result)
     const userData = {
