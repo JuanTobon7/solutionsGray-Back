@@ -42,6 +42,8 @@ module.exports = function (passport) {
   router.use(state)
   router.post('/sing-out', controllerAuth.singOut) // ok
   router.get('/get-my-profile', userController.getMyProfile) // ok
+  // router.put('/update-profile', userController.updateProfile)
+  router.put('/update-photo', userController.updatePhoto) // ok
   router.get('/get-stadistics-people-church/:minDate/:maxDate', churchController.getStadisticPeopleChurch)
   router.get('/get-stadistics-people-course/:minDate/:maxDate', courseController.getStadisticsPeopleCourse)
   router.get('/get-schedules-courses/:courseId', courseController.getShedulesCourses)
