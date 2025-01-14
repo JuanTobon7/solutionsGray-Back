@@ -66,3 +66,17 @@ exports.getMyProfile = async (id) => {
   }
   return user.rows[0]
 }
+
+exports.updatePhoto = async (data) => {
+  const query = `
+    UPDATE people
+    SET avatar = $1
+    WHERE id = $2
+    RETURNING avatar;
+  `
+  const user = await db.query(query, [data.photoUrl, data.userId])
+  if (user.rows.length === 0) {
+    return new Error('No estas registrado en el sistema')
+  }
+  return user.rows[0]
+}
