@@ -284,7 +284,7 @@ exports.verifyChurchLead = async (req, res) => {
       return
     }
 
-    res.status(200).send({ message: 'Verificado Exitosamente' })
+    res.status(200).send({ message: 'Ya Haz sido aceptado' })
   } catch (e) {
     console.log(e)
     res.status(500).sned('Ups algo fallo en el servidor,', e)

@@ -209,7 +209,6 @@ exports.getInvitationBoarding = async (tokenId) => {
 }
 
 exports.acceptInvitation = async (personId) => {
-  console.log('personId: ', personId)
   let query = 'UPDATE invitations SET status = \'aceptado\' WHERE person_id = $1 RETURNING *;'
   let result = await db.query(query, [personId])
   if (result.rows.length === 0) {
