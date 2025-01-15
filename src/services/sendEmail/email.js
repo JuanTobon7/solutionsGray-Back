@@ -1,7 +1,7 @@
 const path = require('path')
 const handlebars = require('handlebars')
 const fs = require('fs')
-const transporter = require('./transport')
+const { sendEmail } = require('./transport') // Usa la función sendEmail que exportamos desde brevoConfig
 
 // Función para leer y compilar la plantilla
 const compileTemplate = (templateName, data) => {
@@ -19,40 +19,44 @@ const compileTemplate = (templateName, data) => {
   }
 }
 
+// Función para enviar invitaciones
 exports.sendInvitationOnBoarding = async (data) => {
   try {
-    console.log('i\'m in sendInvitationOnBoarding')
+    console.log('Enviando invitación de onboarding')
     const { churchName, email, token, inviterName } = data
     const htmlToSend = compileTemplate('invitationBoarding', { churchName, token, inviterName })
-    const mailOptions = {
-      from: process.env.USER_EMAIL_INVITATION,
-      to: email,
+    const emailData = {
+      to: [{ email }], // Recipiente del correo
+      sender: { email: process.env.USER_EMAIL_INVITATION }, // Correo remitente verificado en Brevo
       subject: `Ven y Haz Parte del Ministerio ${churchName}`,
-      html: htmlToSend
+      htmlContent: htmlToSend
     }
-    const result = await transporter.transporterGmail.sendMail(mailOptions)
-
+    const result = await sendEmail(emailData) // Usamos la función sendEmail para enviar el correo
     if (!result) {
       throw new Error('Algo falló al enviar la invitación')
     }
     return result
   } catch (error) {
     console.error('Error en sendInvitationOnBoarding:', error)
+    throw error
   }
 }
 
+// Función para enviar leads
 exports.sendLead = async (data) => {
   try {
     const { churchName, pastorName, email, countryId, token } = data
     const htmlToSend = compileTemplate('leadsChurch', { churchName, pastorName, email, countryId, token })
-    const mailOptions = {
-      from: process.env.USER_EMAIL_INVITATION,
-      to: process.env.EMAIL_ATTEND,
-      html: htmlToSend
+    const emailData = {
+      to: [{ email: process.env.EMAIL_ATTEND }], // Recipiente del correo
+      sender: { email: process.env.USER_EMAIL_INVITATION }, // Correo remitente verificado
+      subject: `Nuevo lead de la iglesia ${churchName}`,
+      htmlContent: htmlToSend
     }
-    const result = await transporter.transporterGmail.sendMail(mailOptions)
+    const result = sendEmail(emailData) // Usamos la función sendEmail para enviar el correo
+    console.log('Correo enviado:', result)
     if (!result) {
-      throw new Error('Algo falló al enviar la invitación')
+      throw new Error('Algo falló al enviar el lead')
     }
     return result
   } catch (error) {
@@ -61,24 +65,27 @@ exports.sendLead = async (data) => {
   }
 }
 
+// Función para asignar servicios
 exports.sendAssignedService = async (data) => {
   try {
     const { servantName, rolServantName, churchName, date, eventName, servantEmail } = data
     if (!servantName || !rolServantName || !date || !eventName || !churchName || !servantEmail) {
-      return new Error('Faltan Datos')
+      throw new Error('Faltan datos necesarios')
     }
     const htmlToSend = compileTemplate('assignedService', { servantName, rolServantName, churchName, date, eventName, servantEmail })
-    const mailOptions = {
-      from: process.env.USER_EMAIL_INVITATION,
-      to: servantEmail,
-      html: htmlToSend
+    const emailData = {
+      to: [{ email: servantEmail }], // Recipiente del correo
+      sender: { email: process.env.USER_EMAIL_INVITATION }, // Correo remitente verificado
+      subject: `Asignación de servicio: ${eventName}`,
+      htmlContent: htmlToSend
     }
-    const result = await transporter.transporterGmail.sendMail(mailOptions)
+    const result = await sendEmail(emailData) // Usamos la función sendEmail para enviar el correo
     if (!result) {
-      throw new Error('Algo falló al enviar la invitación')
+      throw new Error('Algo falló al enviar la asignación')
     }
     return result
-  } catch (e) {
-    return new Error('Ups algo fallo en el proceso de enviar correo', e)
+  } catch (error) {
+    console.error('Error en sendAssignedService:', error)
+    throw error
   }
 }

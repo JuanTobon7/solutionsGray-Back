@@ -47,7 +47,7 @@ exports.sendLead = async (req, res) => {
     }
 
     const pastorName = firstName + ' ' + lastName
-    const sendLead = await sendEmail.sendLead({ churchName, stateId, email, pastorName })
+    const sendLead = sendEmail.sendLead({ churchName, stateId, email, pastorName, token: personId })
     if (sendLead instanceof Error) {
       res.status(400).send(`ups algo al enviar el email ${sendLead.message}`)
       return

@@ -1,4 +1,3 @@
-const token = require('jwt-simple')
 const ouath2Services = require('../services/ouath2')
 
 module.exports = async function (req, res, next) {
@@ -15,10 +14,9 @@ module.exports = async function (req, res, next) {
   console.log('verify invitationToken', invitationToken)
   if (invitationToken) {
     try {
-      const payload = token.decode(invitationToken, process.env.INVITATE_SECRET)
       req.invitationToken = invitationToken
-      console.log('payload invitation token: ', payload)
-      const statusEmail = await ouath2Services.verifyInvitationsLead(payload.tokenId)
+      console.log('payload invitation token: ', invitationToken)
+      const statusEmail = await ouath2Services.verifyInvitationsLead(invitationToken)
 
       if (statusEmail.in_invitations && statusEmail.in_leads_pastor_churches) {
         res.status(400).send({
@@ -31,10 +29,10 @@ module.exports = async function (req, res, next) {
       console.log('this is the status of token:', statusEmail)
       if (statusEmail.in_invitations) {
         console.log('statusEmail in invitations')
-        dataGuest = await ouath2Services.getInvitationBoarding(payload.tokenId)
+        dataGuest = await ouath2Services.getInvitationBoarding(invitationToken)
       } else if (statusEmail.in_leads_pastor_churches) {
         console.log('statusEmail in leads')
-        dataGuest = await ouath2Services.verifyChurchLead(payload.tokenId)
+        dataGuest = await ouath2Services.verifyChurchLead(invitationToken)
       } else {
         console.log('NO entro en ningunaa jeje')
       }
