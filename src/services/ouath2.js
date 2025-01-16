@@ -79,12 +79,13 @@ exports.singUp = async (data) => {
     hashedPassword,
     data.rol
   ])
+  console.log('result: ', result.rows[0])
   if (result.rows.length === 0) {
     const error = new Error('Ups algo paso al insertar el usuario')
     return error
   }
 
-  return 'Usuario Creado Exitosamente'
+  return result.rows[0]
 }
 
 exports.setPassword = async (data) => {
@@ -116,7 +117,7 @@ exports.singIn = async (email, password) => {
     const query = `
             SELECT p.*,s.password,r.name as rol_name,c.name as church_name  FROM users s
             LEFT JOIN people p ON p.id = s.person_id
-            JOIN churches c ON c.id = p.church_id
+            LEFT JOIN churches c ON c.id = p.church_id
             JOIN user_role r ON r.id = s.rol_user_id
             WHERE p.email = $1;
         `

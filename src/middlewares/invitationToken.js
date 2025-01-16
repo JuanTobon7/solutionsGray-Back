@@ -1,16 +1,9 @@
 const ouath2Services = require('../services/ouath2')
 
 module.exports = async function (req, res, next) {
-  let invitationToken = null
   let dataGuest = null
   console.log('catch to verify invitationToken')
-  if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer' && req.headers['x-email-token']) {
-    invitationToken = req.headers.authorization.split(' ')[1]
-  } else if (req.cookies && req.cookies.emailToken) {
-    invitationToken = req.cookies.emailToken
-  } else if (req.body.emailToken) {
-    invitationToken = req.body.emailToken
-  }
+  const invitationToken = req.body.emailToken
   console.log('verify invitationToken', invitationToken)
   if (invitationToken) {
     try {

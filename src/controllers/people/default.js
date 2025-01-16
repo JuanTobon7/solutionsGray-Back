@@ -36,6 +36,7 @@ exports.getPeople = async (req, res) => {
     const { churchId } = req.user
     if (!churchId) {
       res.status(400).send({ message: 'No se pudo acceder a las credenciales' })
+      return
     }
     const result = await peopleServices.getPeople(churchId)
     if (result instanceof Error) {
