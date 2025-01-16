@@ -86,8 +86,8 @@ exports.singUp = async (req, res) => {
     console.log('here here here here go go go')
     const result = await ouath2Services.singUp({ personId, password, rol })
 
-    if (!result) {
-      res.status(500).send({ message: result })
+    if (result instanceof Error) {
+      res.status(400).send({ message: result })
     }
     res.status(200).send({ message: result })
   } catch (e) {
@@ -153,7 +153,8 @@ exports.sigIn = async (req, res) => {
     })
     console.log('result of singIn: ', result)
     const userData = {
-      name: result.first_name + ' ' + result.last_name,
+      firstName: result.first_name,
+      lastName: result.last_name,
       email: result.email,
       rol: result.rol_name,
       churchName: result.church_name,
@@ -284,7 +285,7 @@ exports.verifyChurchLead = async (req, res) => {
       return
     }
 
-    res.status(200).send({ message: 'Ya Haz sido aceptado' })
+    res.status(200).send({ message: 'Ya Haz sido aceptado', ...result })
   } catch (e) {
     console.log(e)
     res.status(500).sned('Ups algo fallo en el servidor,', e)

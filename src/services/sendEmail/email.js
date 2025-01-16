@@ -89,3 +89,15 @@ exports.sendAssignedService = async (data) => {
     throw error
   }
 }
+
+exports.sendAprobeLead = async (data) => {
+  const { churchName, email, firstName, lastName, token } = data
+  const htmlToSend = compileTemplate('aprobeLead', { churchName, firstName, lastName, token })
+  const emailData = {
+    to: [{ email }], // Recipiente del correo
+    sender: { email: process.env.USER_EMAIL_INVITATION }, // Correo remitente verificado
+    subject: 'Bienvenido a Brevo',
+    htmlContent: htmlToSend
+  }
+  sendEmail(emailData)
+}

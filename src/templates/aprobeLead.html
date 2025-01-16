@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bienvenido a Viddefe</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    .header {
+      background-color: #4b7e5c;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+    }
+    .header h1 {
+      margin: 0;
+    }
+    .content {
+      padding: 20px;
+    }
+    .content img {
+      display: block;
+      max-width: 100%;
+      margin: 20px auto;
+      border-radius: 8px;
+    }
+    .content p {
+      line-height: 1.6;
+      margin: 10px 0;
+    }
+
+    a{
+        
+        color: #fff;
+        text-decoration: none;
+        font-size: 16px;
+    }
+
+    .button {
+      display: inline-block;
+      margin: 20px 0;
+      padding: 10px 20px;
+      background-color: #8b7d6b;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    .footer {
+      background-color: #f4f4f9;
+      text-align: center;
+      padding: 10px;
+      font-size: 12px;
+      color: #666;
+    }
+    
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>¡Bienvenido a Viddefe!</h1>
+    </div>
+    <div class="content">
+      <img src="https://s3.us-east-2.amazonaws.com/viddefe.com/photos/register-removebg.png" alt="Registro Viddefe">
+      <p>Hola, <strong>{{firstName}} {{lastName}}</strong>,</p>
+      <p>
+        Es un gusto darte la bienvenida a la iglesia <strong>{{churchName}}</strong>. En Viddefe creemos en el orden de Dios y estamos comprometidos a ayudarte a organizar y gestionar los cultos de manera eficiente y con propósito.
+      </p>
+      <p>
+        Para activar tu cuenta, por favor haz clic en el siguiente botón:
+      </p>
+      <p style="text-align: center;">
+        <a class="button" href="http://localhost:5173/verify-email/?token={{token}}&type=lead">Activar Cuenta</a>
+      </p>
+      <p>
+        Si no solicitaste este correo, simplemente ignóralo.
+      </p>
+      <p>
+        Bendiciones, <br>
+        El equipo de Viddefe.
+      </p>
+    </div>
+    <div class="footer">
+      <p>Viddefe - Aplicación para la gestión de iglesias y organización de cultos.</p>
+    </div>
+  </div>
+</body>
+</html>

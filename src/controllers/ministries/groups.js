@@ -7,11 +7,13 @@ exports.createGroups = async (req, res) => {
     const { churchId } = req.user
     console.log('here data in controller', req.body)
     if (!latitude || !longitude || !name || !leaderId || !strategyName) {
-      return res.status(400).send({ message: 'Faltan datos' })
+      res.status(400).send({ message: 'Faltan datos' })
+      return
     }
     const response = await serviceGroups.createGroups({ latitude, longitude, name, leaderId, churchId, strategyName, description })
     if (response instanceof Error) {
-      return res.status(400).send({ message: response.message })
+      res.status(400).send({ message: response.message })
+      return
     }
     res.status(200).send(response)
   } catch (e) {
@@ -24,7 +26,8 @@ exports.getGroups = async (req, res) => {
     const { churchId } = req.user
     const response = await serviceGroups.getGroups(churchId)
     if (response instanceof Error) {
-      return res.status(400).send({ message: response.message })
+      res.status(400).send({ message: response.message })
+      return
     }
     res.status(200).send(response)
   } catch (e) {
@@ -37,7 +40,8 @@ exports.getMyInfoGroup = async (req, res) => {
     const id = req.user.id
     const response = await serviceGroups.getMyInfoGroup(id)
     if (response instanceof Error) {
-      return res.status(400).send({ message: response.message })
+      res.status(400).send({ message: response.message })
+      return
     }
     res.status(200).send(response)
   } catch (e) {
@@ -49,11 +53,13 @@ exports.getMyGroup = async (req, res) => {
   try {
     const id = req.params.groupId
     if (!id) {
-      return res.status(400).send({ message: 'Faltan datos' })
+      res.status(400).send({ message: 'Faltan datos' })
+      return
     }
     const response = await serviceGroups.getMyGroup(id)
     if (response instanceof Error) {
-      return res.status(400).send({ message: response.message })
+      res.status(400).send({ message: response.message })
+      return
     }
     res.status(200).send(response)
   } catch (e) {
@@ -65,11 +71,13 @@ exports.getServicesGroup = async (req, res) => {
   try {
     const { groupId, minDate, maxDate } = req.params
     if (!groupId || !minDate || !maxDate) {
-      return res.status(400).send({ message: 'Faltan datos' })
+      res.status(400).send({ message: 'Faltan datos' })
+      return
     }
     const response = await serviceGroups.getServicesGroup({ groupId, minDate, maxDate })
     if (response instanceof Error) {
-      return res.status(400).send({ message: response.message })
+      res.status(400).send({ message: response.message })
+      return
     }
     res.status(200).send(response)
   } catch (e) {
@@ -81,12 +89,14 @@ exports.addPersonStrategie = async (req, res) => {
   try {
     const { personId, strategyId, rol, groupId } = req.body
     if (!personId || !strategyId || !rol || !groupId) {
-      return res.status(400).send({ message: 'Faltan datos' })
+      res.status(400).send({ message: 'Faltan datos' })
+      return
     }
     const leaderId = req.body.leaderId || ''
     const response = await serviceGroups.addPersonStrategie({ personId, strategyId, rol, groupId, leaderId })
     if (response instanceof Error) {
-      return res.status(400).send({ message: response.message })
+      res.status(400).send({ message: response.message })
+      return
     }
     res.status(200).send(response)
   } catch (e) {
@@ -98,7 +108,8 @@ exports.getStrategyById = async (req, res) => {
   try {
     const { strategyId } = req.params
     if (!strategyId) {
-      return res.status(400).send({ message: 'Faltan datos' })
+      res.status(400).send({ message: 'Faltan datos' })
+      return
     }
     const response = await serviceGroups.getStrategyById(strategyId)
     if (response instanceof Error) {
