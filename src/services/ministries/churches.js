@@ -8,11 +8,12 @@ exports.createChurches = async (data) => {
     result = await db.query('SELECT * FROM churches WHERE id = $1', [churchId])
   } while (result.rows.length > 0)
   query = `
-        INSERT INTO churches (id,name,parent_church_id,address,state_id) 
-        VALUES ($1,$2,$3,$4,$5)
+
+        INSERT INTO churches (id,name,parent_church_id,latitude,longitude,state_id) 
+        VALUES ($1,$2,$3,$4,$5,$6)
         RETURNING *;`
   console.log(churchId)
-  result = await db.query(query, [churchId, data.name, data.parentChurchId, data.address, data.stateId])
+  result = await db.query(query, [churchId, data.name, data.parentChurchId, data.latitude, data.longitude, data.stateId])
   const resultChurch = result.rows[0]
   if (result.rows.length === 0) {
     return new Error('Ups algo paso al registrar tu iglesia')
@@ -154,5 +155,25 @@ exports.getStadisticAssistance = async (data) => {
     return new Error('No hay informacion que mostrar')
   }
   console.log('result in getStadisticAssistance: ', result.rows)
+  return result.rows
+}
+
+exports.getchurchParents = async () => {
+  const query = `
+    SELECT
+      ch.name,
+      ch.id,
+      c.name AS country,
+      s.name AS state,
+      s.short_name AS state_shortName
+    FROM churches ch
+    JOIN states s ON ch.state_id = s.id
+    JOIN countries c ON s.country_id = c.id
+    WHERE ch.parent_church_id IS NULL;
+  `
+  const result = await db.query(query)
+  if (result.rows.length === 0) {
+    return new Error('No hay iglesias')
+  }
   return result.rows
 }
