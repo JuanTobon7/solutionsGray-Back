@@ -24,10 +24,6 @@ exports.createChurches = async (req, res) => {
   }
 }
 
-// Obtener la fecha actual en la zona horaria del usuario, Convertimos tambien la fecha del evento a la zona horaria del usuario,
-// Verificamos si el evento es al menos 4 días en el futuro
-// Creamos cultos en la iglesia, ojo son disintos a los eventos de los grupos
-
 exports.getTypesWorshipServices = async (req, res) => {
   try {
     console.log('here get types worship services')

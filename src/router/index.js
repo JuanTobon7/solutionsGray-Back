@@ -34,6 +34,7 @@ module.exports = function (passport) {
   router.post('/verify-church-lead', invitateGuest, controllerAuth.verifyChurchLead) // ok
   router.post('/create-users', invitateGuest, controllerAuth.singUp) // ok
   router.get('/get-countries', defaultController.getCountries)
+  router.get('/get-states/:countryId', defaultController.getStates) // ok
 
   // administrativeApp enpoints
   router.get('/get-leads', controllerAdministrativeApp.getLeads) // ok
@@ -69,7 +70,6 @@ module.exports = function (passport) {
   router.post('/shedule-courses', courseController.sheduleCourses)
   router.get('/get-courses-in-charge', admin, courseController.getCoursesInCharge)
   router.get('/get-countries', defaultController.getCountries) // ok
-  router.get('/get-states/:countryId', defaultController.getStates) // ok
   router.get('/sheep/:id', sheepsController.getSheep) // ok
   router.get('/sheeps-by-servant/:servantId', sheepsController.getSheepsByServant) // ok
   router.get('/get-currencies', financeController.getCurrency) // ok
