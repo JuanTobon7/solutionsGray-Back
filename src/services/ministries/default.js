@@ -57,6 +57,7 @@ exports.getServants = async (churchId) => {
     p.first_name,
     p.last_name,
     p.email,
+    p.avatar,
     p.phone,
     (SELECT rs.name
      FROM services srv
@@ -71,6 +72,8 @@ exports.getServants = async (churchId) => {
      WHERE srv.servant_id = p.id
      ORDER BY e.date DESC
      LIMIT 1) AS last_service,
+    ur.name AS user_rol,
+    ur.id AS user_rol_id,
     COUNT(DISTINCT sh.person_id) AS cuantity_sheeps_guide
   FROM 
     people p
@@ -78,10 +81,11 @@ exports.getServants = async (churchId) => {
     sheeps sh ON p.id = sh.guide_id
   JOIN 
     users u ON p.id = u.person_id
+  JOIN user_role ur ON ur.id = u.rol_user_id
   WHERE 
     p.church_id = $1
   GROUP BY 
-    p.id, p.first_name, p.last_name, p.email, p.phone;
+    p.id, p.first_name, p.last_name, p.email, p.phone, ur.name, ur.id,p.avatar;
 `
 
   const result = await db.query(query, [churchId])
@@ -378,4 +382,15 @@ exports.getMyServices = async (data) => {
     return new Error('No hay servicios asignados')
   }
   return result.rows
+}
+
+exports.updateRolesServants = async (data) => {
+  const query = `
+   UPDATE users SET rol_user_id = $1 WHERE person_id = $2 RETURNING *;  
+  `
+  const result = await db.query(query, [data.userRolId, data.servantId])
+  if (result.rows.length === 0) {
+    return new Error('No se pudo actualizar el rol del servidor')
+  }
+  return result.rows[0]
 }

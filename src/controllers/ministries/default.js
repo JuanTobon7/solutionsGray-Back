@@ -365,3 +365,22 @@ exports.getMyServices = async (req, res) => {
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
+
+exports.updateRolesServants = async (req, res) => {
+  try {
+    const { servantId } = req.params
+    const userRolId = req.body.userRolId
+    if (!servantId || !userRolId) {
+      res.status(400).send('Ups faltan datos para esta operacion')
+      return
+    }
+    const result = await serviceDefault.updateRolesServants({ servantId, userRolId })
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send({ message: 'Se ha actualizado correctamente el rol del servidor' })
+  } catch (e) {
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
