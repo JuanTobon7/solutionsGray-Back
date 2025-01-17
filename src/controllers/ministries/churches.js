@@ -3,22 +3,22 @@ const moment = require('moment-timezone')
 
 exports.createChurches = async (req, res) => {
   try {
-    const { name, parentChurchId, address, stateId } = req.body
+    const { name, latitude, longitude, stateId, parentChurchId } = req.body
     const pastorId = req.user.id
     console.log('pastorId', pastorId)
-    if (!name || !address || !stateId) {
+    if (!name || !stateId || !pastorId || !latitude || !longitude) {
       res.status(400).send('Datos Incompletos')
       return
     }
 
-    const result = await serviceChurch.createChurches({ name, parentChurchId, address, stateId, pastorId })
+    const result = await serviceChurch.createChurches({ name, parentChurchId, latitude, longitude, stateId, pastorId })
 
     if (result instanceof Error) {
       res.status(400).send({ message: result.message })
       return
     }
 
-    res.status(200).send(`La iglesia ${result.name} que pastoreas fue creada exitosamente`)
+    res.status(200).send(result)
   } catch (e) {
     console.log(e)
   }
@@ -179,6 +179,19 @@ exports.getStadisticAssistance = async (req, res) => {
     res.status(200).send(result)
   } catch (e) {
     console.log('error:', e)
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
+
+exports.getchurchParents = async (req, res) => {
+  try {
+    const result = await serviceChurch.getchurchParents()
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send(result)
+  } catch (e) {
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
