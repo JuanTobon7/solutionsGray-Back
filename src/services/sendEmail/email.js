@@ -101,3 +101,18 @@ exports.sendAprobeLead = async (data) => {
   }
   sendEmail(emailData)
 }
+
+exports.sendForgotPassword = async (data) => {
+  const { email, firstName, lastName, code } = data
+  if (!email || !firstName || !lastName || !code) {
+    return new Error('Faltan datos necesarios')
+  }
+  const htmlToSend = compileTemplate('forgotPassword', { firstName, lastName, code })
+  const emailData = {
+    to: [{ email }], // Recipiente del correo
+    sender: { email: process.env.USER_EMAIL_INVITATION }, // Correo remitente verificado
+    subject: 'Recuperación de contraseña',
+    htmlContent: htmlToSend
+  }
+  sendEmail(emailData)
+}

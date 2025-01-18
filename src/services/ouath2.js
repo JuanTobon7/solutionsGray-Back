@@ -235,3 +235,28 @@ exports.verifyChurchLead = async (personId) => {
   const info = result.rows[0]
   return { ...info, rol_name: 'Pastor' }
 }
+
+exports.forgotPassword = async (email) => {
+  const query = `
+        SELECT p.* FROM people p
+        JOIN  users s ON p.id = s.person_id
+        WHERE p.email = $1;
+    `
+  const result = await db.query(query, [email])
+  if (result.rows.length === 0) {
+    return new Error('Ups email incorrecto')
+  }
+  const user = result.rows[0]
+  return user
+}
+
+exports.updateForgetPassword = async (data) => {
+  const salt = await bcrypt.genSalt(12)
+  const hashedPassword = await bcrypt.hash(data.password, salt)
+  const query = 'UPDATE users SET password = $1 WHERE person_id = $2 RETURNING *;'
+  const result = await db.query(query, [hashedPassword, data.personId])
+  if (result.rows.length === 0) {
+    return new Error('Ups no se pudo actualizar la contraseña')
+  }
+  return result.rows[0]
+}

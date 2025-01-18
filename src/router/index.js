@@ -27,6 +27,9 @@ module.exports = function (passport) {
   router.post('/refresh-token', passport.authenticate(['rtoken'], { session: false }), controllerAuth.refreshToken) // review
   router.post('/save-people', defaultPeopleController.savePeople) // ok
   router.put('/reset-password', passport.authenticate(['oauth2-client-password'], { session: false }), controllerAuth.setPassword) // ok
+  router.post('/forgot-password', controllerAuth.forgotPassword) // ok
+  router.post('/verify-code', controllerAuth.verifyCode) // ok
+  router.put('/update-forget-password', controllerAuth.updateForgetPassword) // ok
   // verificará el token enviado al correo de la persona, sea usuario promedio o pastor, enviará una respuesta al front que les permitira crear el usuario.
   // invitate users
   router.post('/create-user', invitateGuest, controllerAuth.singUp) // ok
