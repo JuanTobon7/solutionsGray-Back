@@ -31,7 +31,7 @@ exports.sendInvitationOnBoarding = async (data) => {
       subject: `Ven y Haz Parte del Ministerio ${churchName}`,
       htmlContent: htmlToSend
     }
-    const result = await sendEmail(emailData) // Usamos la función sendEmail para enviar el correo
+    const result = sendEmail(emailData) // Usamos la función sendEmail para enviar el correo
     if (!result) {
       throw new Error('Algo falló al enviar la invitación')
     }

@@ -64,7 +64,7 @@ exports.refreshToken = async (req, res) => {
 exports.singUp = async (req, res) => {
   try {
     console.log('entramos a singUp ctrl')
-
+    console.log('req.newUser: ', req.newUser)
     const { password } = req.body
     const { church_id: churchId, person_id: personId } = req.newUser
     console.log('this is the personId: ', personId)
@@ -98,19 +98,19 @@ exports.singUp = async (req, res) => {
 
 exports.setPassword = async (req, res) => {
   try {
+    console.log('entramos a setPassword ctrl')
     const { password, newPassword, personId } = req.body
     if (!password || !newPassword || !personId) {
       res.status(400).send({ message: 'Faltan Datos' })
       return
     }
     const result = await ouath2Services.setPassword({ password, newPassword, personId })
-    if (!result) {
-      res.status(500).send({ message: result })
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
       return
     }
-    res.status(200).send({ message: result })
+    res.status(200).send(result)
   } catch (e) {
-    console.error('Error en setPassword: ', e)
     res.status(500).send({ message: 'Error interno del servidor', error: e.message })
   }
 }
@@ -153,6 +153,7 @@ exports.sigIn = async (req, res) => {
     })
     console.log('result of singIn: ', result)
     const userData = {
+      id: result.id,
       firstName: result.first_name,
       lastName: result.last_name,
       email: result.email,
@@ -217,21 +218,10 @@ exports.createInvitationBoarding = async (req, res) => {
       return
     }
     console.log('result of createInvitationBoarding: ', result)
-    const payload = {
-      tokenId: result.person_id,
-      duration,
-      created,
-      expires,
-      inviterId
-    }
-
-    console.log('payload of invitation token: ', payload)
-
-    const token = jwt.encode(payload, process.env.INVITATE_SECRET, 'HS256')
 
     const churchName = req.user.churchName
     console.log('Going into sendEmail')
-    const invitation = await sendEmail.sendInvitationOnBoarding({ email, churchName, token, inviterName })
+    const invitation = sendEmail.sendInvitationOnBoarding({ email, churchName, token: result.person_id, inviterName })
     if (!invitation) {
       res.status(400).sendd('Ups algo salio mal, intenta nuevamente')
     }
@@ -263,7 +253,7 @@ exports.acceptInvitation = async (req, res) => {
       return
     }
 
-    res.status(200).send({ message: 'Ya Haz sido aceptado', email: invitate.email })
+    res.status(200).send({ message: 'Ya Haz sido aceptado', ...result })
   } catch (e) {
     console.log(e)
     res.status(400).send({ message: `Ups hubo un error ${e.message}` })

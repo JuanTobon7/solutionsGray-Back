@@ -84,3 +84,16 @@ exports.updatePhoto = async (req, res) => {
     res.status(500).send({ message: 'Error interno del servidor', error: e.message })
   }
 }
+
+exports.deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user.id
+    const result = await serviceUser.deleteAccount(userId)
+    if (result instanceof Error) {
+      return res.status(500).send({ message: result.message })
+    }
+    res.status(200).send({ message: 'Cuenta eliminada exitosamente' })
+  } catch (e) {
+    res.status(500).send({ message: 'Error interno del servidor', error: e.message })
+  }
+}

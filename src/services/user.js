@@ -80,3 +80,17 @@ exports.updatePhoto = async (data) => {
   }
   return user.rows[0]
 }
+
+exports.deleteAccount = async (id) => {
+  const query = `
+    UPDATE people SET type_person_id = 5 WHERE id = $1;
+    DELETE FROM users WHERE person_id = $1;
+    DELETE FROM invitations WHERE person_id = $1;
+    DELETE FROM group_integrants WHERE person_id = $1 RETURNING *;
+  `
+  const result = await db.query(query, [id])
+  if (result.rows.length === 0) {
+    return new Error('No estas registrado en el sistema')
+  }
+  return result.rows
+}

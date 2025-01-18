@@ -2,6 +2,7 @@ const peopleServices = require('../../services/people/default')
 
 exports.savePeople = async (req, res) => {
   try {
+    console.log('hey wa happen in Save People', req.user)
     console.log('hey wa happen', req.body)
     const { state_id: stateId, email, first_name: firstName, last_name: lastName, cc, phone, type_person_id: typePerson } = req.body
     if (!stateId || !email || !firstName || !lastName || !cc || !phone || !typePerson) {
@@ -18,6 +19,7 @@ exports.savePeople = async (req, res) => {
       return
     }
     const churchId = req.user.churchId
+    console.log('churchId', churchId)
     const result = await peopleServices.savePeople({ stateId, email, firstName, lastName, cc, phone, typePerson, churchId })
 
     if (result instanceof Error) {
