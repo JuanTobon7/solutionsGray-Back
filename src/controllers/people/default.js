@@ -18,7 +18,9 @@ exports.savePeople = async (req, res) => {
       res.status(400).send('Datos faltantes here')
       return
     }
-    const churchId = req.user.churchId
+
+    const churchId = req.user?.churchId ?? null
+
     console.log('churchId', churchId)
     const result = await peopleServices.savePeople({ stateId, email, firstName, lastName, cc, phone, typePerson, churchId })
 

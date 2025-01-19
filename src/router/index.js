@@ -50,6 +50,7 @@ module.exports = function (passport) {
   router.delete('/delete-account', userController.deleteAccount) // ok
   // router.put('/update-profile', userController.updateProfile)
   router.put('/update-photo', userController.updatePhoto) // ok
+  router.delete('/delete-photo/:fileName', userController.deletePhoto) // ok
   router.get('/get-stadistics-people-church/:minDate/:maxDate', churchController.getStadisticPeopleChurch)
   router.get('/get-stadistics-people-course/:minDate/:maxDate', courseController.getStadisticsPeopleCourse)
   router.get('/get-schedules-courses/:courseId', courseController.getShedulesCourses)
