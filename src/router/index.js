@@ -107,6 +107,7 @@ module.exports = function (passport) {
   router.get('/types-worship-services', superAdmin, churchController.getTypesWorshipServices) // ok
   router.get('/assigned-services/:id', superAdmin, defaultMinisteries.getServices) // ok
   router.post('/create-worship-service', superAdmin, churchController.createWorshipServices) // ok
+  router.post('/notification-worship-service', superAdmin, churchController.notificationWorshipService) // ok
   router.post('/create-worship-service-group', admin, groupsController.createWorshipServices) // ok
   router.post('/create-rol-servant', superAdmin, defaultMinisteries.createRolesServants)// esto puede ir en defaultMinisteries
   router.post('/assing-services', superAdmin, defaultMinisteries.asignServices) // falta por correo y hacer uno por whattsapp pero más adelante

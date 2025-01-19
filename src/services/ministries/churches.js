@@ -177,3 +177,16 @@ exports.getchurchParents = async () => {
   }
   return result.rows
 }
+
+exports.getEmails = async (churchId) => {
+  const query = `
+    SELECT p.email
+    FROM people p
+    WHERE p.church_id = $1;
+  `
+  const result = await db.query(query, [churchId])
+  if (result.rows.length === 0) {
+    return new Error('No hay correos')
+  }
+  return result.rows
+}

@@ -1,5 +1,6 @@
 const serviceChurch = require('../../services/ministries/churches')
 const moment = require('moment-timezone')
+const sendEmail = require('../../services/sendEmail/email')
 
 exports.createChurches = async (req, res) => {
   try {
@@ -189,5 +190,26 @@ exports.getchurchParents = async (req, res) => {
     res.status(200).send(result)
   } catch (e) {
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}
+
+exports.notificationWorshipService = async (req, res) => {
+  try {
+    const { sermonTittle, typeWorshipName, date, churchName } = req.body
+    if (!sermonTittle || !typeWorshipName || !date || !churchName) {
+      res.status(400).send('Datos Incompletos')
+      return
+    }
+    const churchId = req.user.churchId
+    const result = await serviceChurch.getEmails(churchId)
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    console.log('result before to send notification', result)
+    sendEmail.notificationWorshipService({ sermonTittle, typeWorshipName, date, churchName, emails: result })
+    res.status(200).send({ message: 'Correo enviado correctamente' })
+  } catch (e) {
+    res.status(500).send({ message: e })
   }
 }

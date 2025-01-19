@@ -116,3 +116,16 @@ exports.sendForgotPassword = async (data) => {
   }
   sendEmail(emailData)
 }
+
+exports.notificationWorshipService = async (data) => {
+  const { worshipServiceName, typeWorshipName, date, hour, emails } = data
+  console.log('Enviando notificación de servicio', data)
+  const htmlToSend = compileTemplate('worshipNotification', { worshipServiceName, typeWorshipName, date, hour })
+  const emailData = {
+    to: emails, // Recipiente del correo
+    sender: { email: process.env.USER_EMAIL_INVITATION }, // Correo remitente verificado
+    subject: `Notificación de Servicio: ${worshipServiceName}`,
+    htmlContent: htmlToSend
+  }
+  sendEmail(emailData)
+}
