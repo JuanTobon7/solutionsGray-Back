@@ -121,3 +121,17 @@ exports.deleteAccount = async (req, res) => {
     res.status(500).send({ message: 'Error interno del servidor', error: e.message })
   }
 }
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.id
+    const data = req.body
+    const result = await serviceUser.updateProfile(userId, data)
+    if (result instanceof Error) {
+      return res.status(500).send({ message: result.message })
+    }
+    res.status(200).send({ message: 'Perfil actualizado exitosamente' })
+  } catch (e) {
+    res.status(500).send({ message: 'Error interno del servidor', error: e.message })
+  }
+}

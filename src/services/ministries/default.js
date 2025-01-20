@@ -253,10 +253,10 @@ exports.checkQualified = async (data) => {
       AND e.date <= $3
       AND e.group_id IS NULL
     GROUP BY rt.rating, rt.person_qualifier_id, e.date
-    HAVING COUNT(e.id) > 1
     ORDER BY e.date DESC
     LIMIT 1;
       `
+  console.log('data in checkQualified: ', data)
   let result = await db.query(query, [data.userId, data.churchId, data.date])
 
   console.log('result in checkQualified hello: ', result.rows)
