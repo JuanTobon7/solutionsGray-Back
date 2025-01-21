@@ -65,6 +65,7 @@ module.exports = function (passport) {
   router.post('/register-visits', sheepsController.resgisterVisits) // ok
   router.get('/services', defaultMinisteries.getRolesServices) // ok
   router.get('/get-visits/:sheepId', sheepsController.getVisits)
+  router.get('/assigned-services/:id', defaultMinisteries.getServices) // ok
   router.get('/basic-info-user', userController.basicInfo) // ok
   router.get('/worship-services/:minDate/:maxDate', churchController.getWorshipServices) // ok
   router.post('/shedule-courses', courseController.sheduleCourses)
@@ -79,27 +80,28 @@ module.exports = function (passport) {
   router.get('/get-attendance-group/:groupId/:date', groupsController.getAttendanceGroup)
   router.delete('/delete-attendance/:personId/:eventId', defaultMinisteries.deleteAttendance)
   router.get('/check-qualified/:date', defaultMinisteries.checkQualified)
+  router.delete('/cancel-course/:courseId/:studentId', courseController.cancelCourse)
   router.post('/qualify-service', defaultMinisteries.qualifyService)
+  router.post('/register-nouser-course', courseController.enrrollNoUsersInCourse)
+  router.put('/evaluate-student/:studentId', courseController.evaluateStudent)
+  router.get('/get-students-course/:courseId', courseController.getStudentsCourse)
+  router.post('/register-attendance-course', courseController.registerAttendanceCourse)
+  router.get('/get-attendance-course/:courseId', courseController.getAttendanceCourse)
+  router.post('/register-visits', sheepsController.resgisterVisits) // review ok
+  router.delete('/delete-attendance-course/:attenId', courseController.deleteAttendanceCourse)
 
   // admin endpoints
   router.post('/register-sheeps', admin, sheepsController.registerSheeps) // ok
-  router.post('/register-visits', admin, sheepsController.resgisterVisits) // review ok
   router.get('/get-types-people', admin, defaultPeopleController.getTypesPeople) //
   router.post('/save-contribution', admin, financeController.saveContribution)
-  router.get('/get-students-course/:courseId', admin, courseController.getStudentsCourse)
-  router.get('/get-attendance-course/:courseId', admin, courseController.getAttendanceCourse)
-  router.post('/register-attendance-course', admin, courseController.registerAttendanceCourse)
-  router.post('/register-nouser-course', admin, courseController.enrrollNoUsersInCourse)
   router.post('/add-person-strategy', admin, groupsController.addPersonStrategie)
   router.get('/get-strategy/:strategyId', admin, groupsController.getStrategyById)
-  router.delete('/delete-attendance-course/:attenId', admin, courseController.deleteAttendanceCourse)
   router.get('/stadistic-attendance-course/:courseId', admin, courseController.stadisticAttendanceCourse)
-  router.put('/evaluate-student/:studentId', admin, courseController.evaluateStudent)
+  router.get('/get-stadistics-people-church/:minDate/:maxDate', admin, churchController.getStadisticPeopleChurch)
+  router.get('/get-stadistics-people-course/:minDate/:maxDate', admin, courseController.getStadisticsPeopleCourse)
+  router.post('/invitation-boarding', admin, controllerAuth.createInvitationBoarding) // ok
   // super admin endpoints
   router.get('/types-worship-services', superAdmin, churchController.getTypesWorshipServices) // ok
-  router.get('/get-stadistics-people-church/:minDate/:maxDate', churchController.getStadisticPeopleChurch)
-  router.get('/get-stadistics-people-course/:minDate/:maxDate', courseController.getStadisticsPeopleCourse)
-  router.get('/assigned-services/:id', superAdmin, defaultMinisteries.getServices) // ok
   router.post('/create-worship-service', superAdmin, churchController.createWorshipServices) // ok
   router.post('/notification-worship-service', superAdmin, churchController.notificationWorshipService) // ok
   router.post('/create-worship-service-group', admin, groupsController.createWorshipServices) // ok
@@ -113,7 +115,6 @@ module.exports = function (passport) {
   router.post('/create-chapters-course', superAdmin, courseController.registerChaptersCourses) // revisar
   router.post('/assing-courses', superAdmin, courseController.assignCourses) // remember send an Email
   router.post('/save-shedules-courses', superAdmin, courseController.saveShedulesCourses) // ok
-  router.post('/invitation-boarding', superAdmin, controllerAuth.createInvitationBoarding) // ok
   router.get('/courses', superAdmin, courseController.getCourses)
   router.get('/average-rating-servants/:typeServiceId', superAdmin, defaultMinisteries.getServantsAverageRating)
   router.get('/average-rating-by-servant/:servantId', superAdmin, defaultMinisteries.getAverageRatingByServant)
