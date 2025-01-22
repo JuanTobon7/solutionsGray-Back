@@ -42,7 +42,7 @@ module.exports = function (passport) {
   router.post('/sing-out', controllerAuth.singOut) // ok
   router.get('/get-my-profile', userController.getMyProfile) // ok
   router.get('/get-parents-churches', churchController.getchurchParents) // ok
-  router.delete('/delete-account', userController.deleteAccount) // ok
+  router.delete('/delete-account/:userId', userController.deleteAccount) // ok
   router.put('/update-profile', userController.updateProfile)
   router.put('/update-photo', userController.updatePhoto) // ok
   router.get('/get-people', defaultPeopleController.getPeople) // estoy puede ir en defaultController

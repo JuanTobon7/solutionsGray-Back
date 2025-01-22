@@ -82,13 +82,15 @@ exports.updatePhoto = async (data) => {
 }
 
 exports.deleteAccount = async (id) => {
-  const query = `
-    UPDATE people SET type_person_id = 5 WHERE id = $1;
-    DELETE FROM users WHERE person_id = $1;
-    DELETE FROM invitations WHERE person_id = $1;
-    DELETE FROM group_integrants WHERE person_id = $1 RETURNING *;
-  `
-  const result = await db.query(query, [id])
+  let query = 'UPDATE people SET type_person_id = 5 WHERE id = $1;'
+  let result = await db.query(query, [id])
+  query = 'DELETE FROM invitations WHERE person_id = $1;'
+  result = await db.query(query, [id])
+  query = 'DELETE FROM group_integrants WHERE person_id = $1'
+  result = await db.query(query, [id])
+  query = 'DELETE FROM users WHERE person_id = $1 RETURNING *;'
+  result = await db.query(query, [id])
+
   if (result.rows.length === 0) {
     return new Error('No estas registrado en el sistema')
   }

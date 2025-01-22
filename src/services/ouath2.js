@@ -124,7 +124,7 @@ exports.singIn = async (email, password) => {
         `
     const result = await db.query(query, [email])
     if (result.rows.length === 0) {
-      const error = new Error('Ups email incorrecto')
+      const error = new Error('Ups este email no esta registrado')
       return error
     }
     const user = result.rows[0] // Cambiar 'data' a 'user'

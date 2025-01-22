@@ -111,13 +111,25 @@ exports.deletePhoto = async (req, res) => {
 
 exports.deleteAccount = async (req, res) => {
   try {
-    const userId = req.user.id
-    const result = await serviceUser.deleteAccount(userId)
-    if (result instanceof Error) {
-      return res.status(500).send({ message: result.message })
+    console.log('req.params:', req.params)
+    const userId = req.params.userId == 'undefined' ? req.user.id : req.params.userId
+
+    if (!userId) {
+      console.error('Error: Falta el ID del usuario.')
+      return res.status(400).send({ message: 'Falta el ID del usuario.' })
     }
+
+    console.log('userId:', userId)
+
+    const result = await serviceUser.deleteAccount(userId)
+
+    if (result instanceof Error) {
+      return res.status(400).send({ message: result.message })
+    }
+
     res.status(200).send({ message: 'Cuenta eliminada exitosamente' })
   } catch (e) {
+    console.error('Error interno del servidor:', e.message)
     res.status(500).send({ message: 'Error interno del servidor', error: e.message })
   }
 }
