@@ -94,6 +94,7 @@ module.exports = function (passport) {
   router.post('/register-sheeps', admin, sheepsController.registerSheeps) // ok
   router.get('/get-types-people', admin, defaultPeopleController.getTypesPeople) //
   router.post('/save-contribution', admin, financeController.saveContribution)
+  router.get('/get-report-offerings/:eventId', admin, financeController.getReportOfferings)
   router.post('/add-person-strategy', admin, groupsController.addPersonStrategie)
   router.get('/get-strategy/:strategyId', admin, groupsController.getStrategyById)
   router.get('/stadistic-attendance-course/:courseId', admin, courseController.stadisticAttendanceCourse)
@@ -102,6 +103,7 @@ module.exports = function (passport) {
   router.post('/invitation-boarding', admin, controllerAuth.createInvitationBoarding) // ok
   // super admin endpoints
   router.get('/types-worship-services', superAdmin, churchController.getTypesWorshipServices) // ok
+  router.get('/get-finances-year/:minDate/:maxDate', superAdmin, financeController.getFinances) // ok
   router.post('/create-worship-service', superAdmin, churchController.createWorshipServices) // ok
   router.post('/notification-worship-service', superAdmin, churchController.notificationWorshipService) // ok
   router.post('/create-worship-service-group', admin, groupsController.createWorshipServices) // ok
