@@ -1,37 +1,6 @@
 const defaultServices = require('../services/default')
 const sendEmail = require('../services/sendEmail/email')
 
-exports.savePeople = async (req, res) => {
-  try {
-    console.log('hey wa happen', req.body)
-    const { state_id: stateId, email, first_name: firstName, last_name: lastName, cc, phone, type_person_id: typePerson } = req.body
-    if (!stateId || !email || !firstName || !lastName || !cc || !phone || !typePerson) {
-      console.log('Datos faltantes here')
-      console.log('stateId', stateId)
-      console.log('email', email)
-      console.log('firstName', firstName)
-      console.log('lastName', lastName)
-      console.log('cc', cc)
-      console.log('phone', phone)
-      console.log('typePerson', typePerson)
-      console.log('req.body', req.body)
-      res.status(400).send('Datos faltantes here')
-      return
-    }
-    const churchId = req.user.churchId
-    const result = await defaultServices.savePeople({ stateId, email, firstName, lastName, cc, phone, typePerson, churchId })
-
-    if (result instanceof Error) {
-      res.status(400).send({ message: result.message })
-      return
-    }
-
-    res.status(200).send(result)
-  } catch (e) {
-    res.status(500).send(`Ups algo fallo en el servidor ${e.message}`)
-  }
-}
-
 exports.sendLead = async (req, res) => {
   try {
     const { churchName, stateId, email, firstName, lastName, phone, personId } = req.body

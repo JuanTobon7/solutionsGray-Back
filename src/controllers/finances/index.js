@@ -75,3 +75,40 @@ exports.getCurrency = async (req, res) => {
     res.status(500).send(`Ups algo fallo en el servidor ${e.message}`)
   }
 }
+
+exports.getFinances = async (req, res) => {
+  try {
+    const { minDate, maxDate } = req.params
+    const churchId = req.user.churchId
+    if (!minDate || !maxDate) {
+      res.status(400).send({ message: 'Faltan datos para obtener las finanzas' })
+      return
+    }
+    const result = await serviceDefault.getFinances({ minDate, maxDate, churchId })
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send(result)
+  } catch (e) {
+    res.status(500).send(`Ups algo fallo en el servidor ${e.message}`)
+  }
+}
+
+exports.getReportOfferings = async (req, res) => {
+  try {
+    const { eventId } = req.params
+    if (!eventId) {
+      res.status(400).send({ message: 'Faltan datos para obtener el reporte de ofrendas' })
+      return
+    }
+    const result = await serviceDefault.getReportOfferings(eventId)
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send(result)
+  } catch (e) {
+    res.status(500).send(`Ups algo fallo en el servidor ${e.message}`)
+  }
+}

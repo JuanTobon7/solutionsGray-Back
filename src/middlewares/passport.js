@@ -24,6 +24,7 @@ passport.use('rtoken', new CustomStrategy(async function (request, done) {
   try {
     if (request.cookies && request.cookies.refresh_token) {
       const refreshToken = request.cookies.refresh_token
+      console.log('refreshToken: ', refreshToken)
       const data = await oauth2Service.getInfoFromValidToken(refreshToken)
       if (!data) {
         const error = new Error('Informacion de session no encontrada')

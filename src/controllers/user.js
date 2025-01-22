@@ -1,5 +1,5 @@
 const serviceUser = require('../services/user')
-const { upload } = require('./s3Aws') // Ajusta el path a tu archivo de configuración S3
+const { upload, deleteObject } = require('./s3Aws') // Ajusta el path a tu archivo de configuración S3
 
 exports.findById = async (id) => {
   if (!id) {
@@ -80,6 +80,69 @@ exports.updatePhoto = async (req, res) => {
         avatar: photoUrl
       })
     })
+  } catch (e) {
+    res.status(500).send({ message: 'Error interno del servidor', error: e.message })
+  }
+}
+
+exports.deletePhoto = async (req, res) => {
+  try {
+    const { fileName } = req.params // Obtener el parámetro de la URL
+    if (!fileName) {
+      return res.status(400).send({ message: 'Falta el nombre del archivo.' })
+    }
+
+    const decodedFileName = decodeURIComponent(fileName) // Decodificar el nombre del archivo
+    const fileKey = decodedFileName.split(`${process.env.BUCKET_URL}`)[1]
+    console.log('fileName recibido:', fileKey)
+
+    const result = await deleteObject(fileKey)
+
+    if (!result.success) {
+      return res.status(400).send({ message: result.message, error: result.error })
+    }
+
+    res.status(200).send({ message: result.message })
+  } catch (e) {
+    console.error('Error en deletePhoto:', e.message)
+    res.status(500).send({ message: 'Error interno del servidor', error: e.message })
+  }
+}
+
+exports.deleteAccount = async (req, res) => {
+  try {
+    console.log('req.params:', req.params)
+    const userId = req.params.userId == 'undefined' ? req.user.id : req.params.userId
+
+    if (!userId) {
+      console.error('Error: Falta el ID del usuario.')
+      return res.status(400).send({ message: 'Falta el ID del usuario.' })
+    }
+
+    console.log('userId:', userId)
+
+    const result = await serviceUser.deleteAccount(userId)
+
+    if (result instanceof Error) {
+      return res.status(400).send({ message: result.message })
+    }
+
+    res.status(200).send({ message: 'Cuenta eliminada exitosamente' })
+  } catch (e) {
+    console.error('Error interno del servidor:', e.message)
+    res.status(500).send({ message: 'Error interno del servidor', error: e.message })
+  }
+}
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.id
+    const data = req.body
+    const result = await serviceUser.updateProfile(userId, data)
+    if (result instanceof Error) {
+      return res.status(500).send({ message: result.message })
+    }
+    res.status(200).send({ message: 'Perfil actualizado exitosamente' })
   } catch (e) {
     res.status(500).send({ message: 'Error interno del servidor', error: e.message })
   }

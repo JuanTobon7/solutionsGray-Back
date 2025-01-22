@@ -89,49 +89,49 @@ exports.singUp = async (data) => {
 }
 
 exports.setPassword = async (data) => {
-  let query, result
-  query = 'SELECT * FROM users WHERE person_id = $1;'
-  result = await db.query(query, [data.personId])
+  console.log('data: ', data)
+  let query = 'SELECT * FROM users WHERE person_id = $1;'
+  let result = await db.query(query, [data.personId])
   if (result.rows.length === 0) {
-    return new Error('Ups no se encontro el usuario')
+    return new Error('Ups, no se encontró el usuario')
   }
-  if (!await bcrypt.compare(data.password, result.rows[0].password)) {
-    return new Error('Ups la contraseña no coincide')
+  const user = result.rows[0]
+  console.log('user: ', user)
+  const isMatch = await bcrypt.compare(data.password, user.password)
+  if (!isMatch) {
+    return new Error('Ups, la contraseña actual no coincide')
   }
-  query = `
-        UPDATE users SET password = $1 WHERE person_id = $2 RETURNING *;
-    `
   const salt = await bcrypt.genSalt(12)
-  const hashedPassword = await bcrypt.hash(data.password, salt)
+  const hashedPassword = await bcrypt.hash(data.newPassword, salt)
+  query = 'UPDATE users SET password = $1 WHERE person_id = $2 RETURNING *;'
   result = await db.query(query, [hashedPassword, data.personId])
   if (result.rows.length === 0) {
-    return new Error('Ups no se pudo actualizar la contraseña')
+    return new Error('Ups, no se pudo actualizar la contraseña')
   }
-  return 'Contraseña actualizada'
+  return result.rows[0]
 }
 
 exports.singIn = async (email, password) => {
   try {
     console.log('email: ', email)
     console.log('password: ', password)
-    const query = `
-            SELECT p.*,s.password,r.name as rol_name,c.name as church_name  FROM users s
-            LEFT JOIN people p ON p.id = s.person_id
+    const query = `    
+            SELECT p.*,s.password,r.name as rol_name,c.name as church_name  FROM people p
+            JOIN  users s ON p.id = s.person_id
             LEFT JOIN churches c ON c.id = p.church_id
             JOIN user_role r ON r.id = s.rol_user_id
             WHERE p.email = $1;
         `
     const result = await db.query(query, [email])
-
     if (result.rows.length === 0) {
-      const error = new Error('Ups email incorrecto')
+      const error = new Error('Ups este email no esta registrado')
       return error
     }
     const user = result.rows[0] // Cambiar 'data' a 'user'
-
+    console.log('user: ', user)
     const hashedPassword = user.password
 
-    if (await !bcrypt.compare(password, hashedPassword)) {
+    if (!(await bcrypt.compare(password, hashedPassword))) {
       const error = new Error('Ups contraseña incorrecta')
       return error
     }
@@ -215,7 +215,7 @@ exports.acceptInvitation = async (personId) => {
   if (result.rows.length === 0) {
     return new Error('Ups no estabas en nuestra base de datos como invitado')
   }
-  query = 'SELECT email FROM people WHERE id = $1;'
+  query = 'SELECT p.* FROM people p WHERE id = $1;'
   result = await db.query(query, [personId])
   console.log('result: ', result.rows[0])
   return result.rows[0]
@@ -234,4 +234,29 @@ exports.verifyChurchLead = async (personId) => {
   }
   const info = result.rows[0]
   return { ...info, rol_name: 'Pastor' }
+}
+
+exports.forgotPassword = async (email) => {
+  const query = `
+        SELECT p.* FROM people p
+        JOIN  users s ON p.id = s.person_id
+        WHERE p.email = $1;
+    `
+  const result = await db.query(query, [email])
+  if (result.rows.length === 0) {
+    return new Error('Ups email incorrecto')
+  }
+  const user = result.rows[0]
+  return user
+}
+
+exports.updateForgetPassword = async (data) => {
+  const salt = await bcrypt.genSalt(12)
+  const hashedPassword = await bcrypt.hash(data.password, salt)
+  const query = 'UPDATE users SET password = $1 WHERE person_id = $2 RETURNING *;'
+  const result = await db.query(query, [hashedPassword, data.personId])
+  if (result.rows.length === 0) {
+    return new Error('Ups no se pudo actualizar la contraseña')
+  }
+  return result.rows[0]
 }

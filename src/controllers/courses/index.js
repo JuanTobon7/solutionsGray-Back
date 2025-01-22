@@ -406,3 +406,23 @@ exports.getStadisticsPeopleCourse = async (req, res) => {
     res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
   }
 }
+
+exports.cancelCourse = async (req, res) => {
+  try {
+    const { courseId, studentId } = req.params
+    console.log('req.params', req.params)
+    const studentCourseId = studentId || req.user.id
+    if (!courseId || !studentCourseId) {
+      res.status(400).send({ message: 'Ups faltan datos' })
+      return
+    }
+    const result = await serviceCourses.cancelCourse({ courseId, studentCourseId })
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send(result)
+  } catch (e) {
+    res.status(500).send(`Ups algo falló en el servidor: ${e.message}`)
+  }
+}

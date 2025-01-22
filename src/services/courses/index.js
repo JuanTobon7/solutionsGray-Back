@@ -393,8 +393,24 @@ exports.getStadisticsPeopleCourse = async (data) => {
   `
   const result = await db.query(query, [data.churchId, data.minDate, data.maxDate])
   console.log('result getStadisticsPeopleCourse', result.rows)
-  if (result.rows[0].quantity_students === '0') {
+  if (result.rows.length === 0) {
     return new Error('No hay informacion que mostrar')
   }
   return result.rows[0]
+}
+
+exports.cancelCourse = async (data) => {
+  try {
+    console.log('data in cancelCourse', data)
+    const query = `
+    DELETE FROM students_courses WHERE student_id = $1 AND teachers_courses_id = $2 RETURNING *;
+    `
+    const result = await db.query(query, [data.studentCourseId, data.courseId])
+    if (result.rows.length === 0) {
+      return new Error('Ups algo paso')
+    }
+    return result.rows[0]
+  } catch (e) {
+    console.log('error', e)
+  }
 }

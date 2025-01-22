@@ -2,6 +2,7 @@ const ouath2Services = require('../services/ouath2')
 const moment = require('moment')
 const jwt = require('jwt-simple')
 const sendEmail = require('../services/sendEmail/email')
+const redis = require('../databases/redisDB')
 
 async function createAccessToken (data, duration) {
   const payload = {
@@ -64,7 +65,7 @@ exports.refreshToken = async (req, res) => {
 exports.singUp = async (req, res) => {
   try {
     console.log('entramos a singUp ctrl')
-
+    console.log('req.newUser: ', req.newUser)
     const { password } = req.body
     const { church_id: churchId, person_id: personId } = req.newUser
     console.log('this is the personId: ', personId)
@@ -98,19 +99,19 @@ exports.singUp = async (req, res) => {
 
 exports.setPassword = async (req, res) => {
   try {
+    console.log('entramos a setPassword ctrl')
     const { password, newPassword, personId } = req.body
     if (!password || !newPassword || !personId) {
       res.status(400).send({ message: 'Faltan Datos' })
       return
     }
     const result = await ouath2Services.setPassword({ password, newPassword, personId })
-    if (!result) {
-      res.status(500).send({ message: result })
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
       return
     }
-    res.status(200).send({ message: result })
+    res.status(200).send(result)
   } catch (e) {
-    console.error('Error en setPassword: ', e)
     res.status(500).send({ message: 'Error interno del servidor', error: e.message })
   }
 }
@@ -153,6 +154,7 @@ exports.sigIn = async (req, res) => {
     })
     console.log('result of singIn: ', result)
     const userData = {
+      id: result.id,
       firstName: result.first_name,
       lastName: result.last_name,
       email: result.email,
@@ -217,21 +219,10 @@ exports.createInvitationBoarding = async (req, res) => {
       return
     }
     console.log('result of createInvitationBoarding: ', result)
-    const payload = {
-      tokenId: result.person_id,
-      duration,
-      created,
-      expires,
-      inviterId
-    }
-
-    console.log('payload of invitation token: ', payload)
-
-    const token = jwt.encode(payload, process.env.INVITATE_SECRET, 'HS256')
 
     const churchName = req.user.churchName
     console.log('Going into sendEmail')
-    const invitation = await sendEmail.sendInvitationOnBoarding({ email, churchName, token, inviterName })
+    const invitation = sendEmail.sendInvitationOnBoarding({ email, churchName, token: result.person_id, inviterName })
     if (!invitation) {
       res.status(400).sendd('Ups algo salio mal, intenta nuevamente')
     }
@@ -263,7 +254,7 @@ exports.acceptInvitation = async (req, res) => {
       return
     }
 
-    res.status(200).send({ message: 'Ya Haz sido aceptado', email: invitate.email })
+    res.status(200).send({ message: 'Ya Haz sido aceptado', ...result })
   } catch (e) {
     console.log(e)
     res.status(400).send({ message: `Ups hubo un error ${e.message}` })
@@ -292,3 +283,73 @@ exports.verifyChurchLead = async (req, res) => {
   }
 }
 // haz algo escribe algo que me deje ver un console.log
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body
+    if (!email) {
+      res.status(400).send({ message: 'Faltan Datos' })
+      return
+    }
+    const result = await ouath2Services.forgotPassword(email)
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    const duration = 60 * 10 // 10 min
+    const code = Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000
+    const redisKey = `forgot-password-${email}`
+    const payload = {
+      code,
+      personId: result.id
+    }
+    await redis.set(redisKey, payload, duration)
+    const emailData = {
+      email: result.email,
+      firstName: result.first_name,
+      lastName: result.last_name,
+      code
+    }
+    sendEmail.sendForgotPassword(emailData)
+    res.status(200).send({ message: 'Correo enviado' })
+  } catch (e) {
+    console.error('Error en forgotPassword: ', e)
+    res.status(500).send({ message: 'Error interno del servidor', error: e.message })
+  }
+}
+
+exports.verifyCode = async (req, res) => {
+  try {
+    const { code, email } = req.body
+    const redisKey = `forgot-password-${email}`
+    const codeRedis = await redis.get(redisKey)
+    console.log('codeRedis: ', codeRedis.code)
+    if (Number(code) !== codeRedis.code) {
+      res.status(400).send({ message: 'Código incorrecto' })
+      return
+    }
+    res.status(200).send({ message: 'Código correcto', id: codeRedis.personId })
+  } catch (e) {
+    res.status(500).send({ message: 'Error interno del servidor', error: e.message })
+  }
+}
+
+exports.updateForgetPassword = async (req, res) => {
+  try {
+    const { personId, password } = req.body
+    console.log('personId: ', personId)
+    console.log('password: ', password)
+    if (!personId || !password) {
+      res.status(400).send({ message: 'Faltan Datos' })
+      return
+    }
+    const result = await ouath2Services.updateForgetPassword({ personId, password })
+    if (result instanceof Error) {
+      res.status(400).send({ message: result.message })
+      return
+    }
+    res.status(200).send({ message: 'Contraseña actualizada' })
+  } catch (e) {
+    res.status(500).send({ message: 'Error interno del servidor', error: e.message })
+  }
+}

@@ -31,7 +31,7 @@ exports.sendInvitationOnBoarding = async (data) => {
       subject: `Ven y Haz Parte del Ministerio ${churchName}`,
       htmlContent: htmlToSend
     }
-    const result = await sendEmail(emailData) // Usamos la función sendEmail para enviar el correo
+    const result = sendEmail(emailData) // Usamos la función sendEmail para enviar el correo
     if (!result) {
       throw new Error('Algo falló al enviar la invitación')
     }
@@ -97,6 +97,34 @@ exports.sendAprobeLead = async (data) => {
     to: [{ email }], // Recipiente del correo
     sender: { email: process.env.USER_EMAIL_INVITATION }, // Correo remitente verificado
     subject: 'Bienvenido a Brevo',
+    htmlContent: htmlToSend
+  }
+  sendEmail(emailData)
+}
+
+exports.sendForgotPassword = async (data) => {
+  const { email, firstName, lastName, code } = data
+  if (!email || !firstName || !lastName || !code) {
+    return new Error('Faltan datos necesarios')
+  }
+  const htmlToSend = compileTemplate('forgotPassword', { firstName, lastName, code })
+  const emailData = {
+    to: [{ email }], // Recipiente del correo
+    sender: { email: process.env.USER_EMAIL_INVITATION }, // Correo remitente verificado
+    subject: 'Recuperación de contraseña',
+    htmlContent: htmlToSend
+  }
+  sendEmail(emailData)
+}
+
+exports.notificationWorshipService = async (data) => {
+  const { worshipServiceName, typeWorshipName, date, hour, emails } = data
+  console.log('Enviando notificación de servicio', data)
+  const htmlToSend = compileTemplate('worshipNotification', { worshipServiceName, typeWorshipName, date, hour })
+  const emailData = {
+    to: emails, // Recipiente del correo
+    sender: { email: process.env.USER_EMAIL_INVITATION }, // Correo remitente verificado
+    subject: `Notificación de Servicio: ${worshipServiceName}`,
     htmlContent: htmlToSend
   }
   sendEmail(emailData)
