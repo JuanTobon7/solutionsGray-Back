@@ -7,66 +7,80 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f4f4f9;
-      color: #333;
       margin: 0;
       padding: 0;
+      background-color: #f7f7f7;
+      color: #333;
     }
-    .container {
+
+    .email-container {
       max-width: 600px;
       margin: 20px auto;
-      background: #ffffff;
+      background-color: #fff;
       border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       overflow: hidden;
+      border: 1px solid #ddd;
     }
+
     .header {
       background-color: #4b7e5c;
       color: #fff;
       text-align: center;
       padding: 20px;
     }
+
+    .header img {
+      max-width: 150px;
+      height: auto;
+      margin-bottom: 10px;
+    }
+
     .header h1 {
       margin: 0;
+      font-size: 24px;
     }
+
     .content {
       padding: 20px;
     }
-    .content img {
-      display: block;
-      max-width: 100%;
-      margin: 20px auto;
-      border-radius: 8px;
-    }
+
     .content p {
+      margin: 0 0 10px;
       line-height: 1.6;
-      margin: 10px 0;
     }
 
-    a{
-        
-        color: #fff;
-        text-decoration: none;
-        font-size: 16px;
+    .inviter {
+      font-weight: bold;
     }
 
-    .button {
-      display: inline-block;
+    .cta {
+      text-align: center;
       margin: 20px 0;
-      padding: 10px 20px;
+    }
+
+    .cta a {
+      text-decoration: none;
+      background-color: #4b7e5c;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 5px;
+      font-weight: bold;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+    }
+
+    .cta a:hover {
+      background-color: #3a6348;
+    }
+
+    .footer {
       background-color: #8b7d6b;
       color: #fff;
-      text-decoration: none;
-      border-radius: 5px;
-    }
-    .footer {
-      background-color: #f4f4f9;
       text-align: center;
       padding: 10px;
-      font-size: 12px;
-      color: #666;
+      font-size: 14px;
     }
-    
   </style>
 </head>
 <body>

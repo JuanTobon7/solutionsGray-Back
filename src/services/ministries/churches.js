@@ -105,7 +105,6 @@ exports.getStadisticPeopleChurch = async (data) => {
   const query = `
      SELECT 
         ch.name,
-        ch.address,
         ch.state_id AS stateId,
         COUNT(DISTINCT g.id) AS quantityGroups,
         SUM(CASE WHEN tp.name = 'Invitado' THEN 1 ELSE 0 END) AS countInvitado,
@@ -122,7 +121,7 @@ exports.getStadisticPeopleChurch = async (data) => {
     JOIN types_people tp ON p.type_person_id = tp.id
     LEFT JOIN group_churches g ON ch.id = g.church_id
     WHERE ch.id = $1
-    GROUP BY ch.name, ch.address, ch.state_id;
+    GROUP BY ch.name, ch.state_id;
 
   `
   const result = await db.query(query, [data.churchId, data.minDate, data.maxDate])
@@ -174,6 +173,19 @@ exports.getchurchParents = async () => {
   const result = await db.query(query)
   if (result.rows.length === 0) {
     return new Error('No hay iglesias')
+  }
+  return result.rows
+}
+
+exports.getEmails = async (churchId) => {
+  const query = `
+    SELECT p.email
+    FROM people p
+    WHERE p.church_id = $1;
+  `
+  const result = await db.query(query, [churchId])
+  if (result.rows.length === 0) {
+    return new Error('No hay correos')
   }
   return result.rows
 }

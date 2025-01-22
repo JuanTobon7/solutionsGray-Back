@@ -1,16 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Invitaiton Boarding</title>
+  <title>Invitación a Vid de Fe</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f7f7f7;
+      color: #333;
+    }
+
+    .email-container {
+      max-width: 600px;
+      margin: 20px auto;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      border: 1px solid #ddd;
+    }
+
+    .header {
+      background-color: #4b7e5c;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .header img {
+      max-width: 150px;
+      height: auto;
+      margin-bottom: 10px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .content {
+      padding: 20px;
+    }
+
+    .content p {
+      margin: 0 0 10px;
+      line-height: 1.6;
+    }
+
+    .inviter {
+      font-weight: bold;
+    }
+
+    .cta {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .cta a {
+      text-decoration: none;
+      background-color: #4b7e5c;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 5px;
+      font-weight: bold;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+    }
+
+    .cta a:hover {
+      background-color: #3a6348;
+    }
+
+    .footer {
+      background-color: #8b7d6b;
+      color: #fff;
+      text-align: center;
+      padding: 10px;
+      font-size: 14px;
+    }
+  </style>
 </head>
+
 <body>
-    <h1>Hola!!!</h1>
-    <p>{{inviterName}} este correo para invitarte a unirte a nuestra plataforma Solutions Gray. Y servir como voluntario en el ministerio
-    de la iglesia {{churchName}}.
-    </p>
-    <p>Para poder acceder a la plataforma, por favor sigue el siguiente enlace:</p>
-    <a href="http://localhost:5173/invitation-boarding?token={{token}}">Unirme a Solutions Gray</a>
-  </body>
+  <div class="email-container">
+    <div class="header">
+      <img src="https://viddefe.com.s3.us-east-2.amazonaws.com/photos/solutionGrayLOGO-removebg.png" alt="Solutions Gray Logo">
+      <h1>¡Hola!</h1>
+    </div>
+    <div class="content">
+      <p><span class="inviter">{{inviterName}}</span> te ha enviado esta invitación para unirte a nuestra plataforma <strong>Solutions Gray</strong>.</p>
+      <p>Serás parte de un equipo de voluntarios en el ministerio de la iglesia <strong>{{churchName}}</strong>.</p>
+      <p>Para comenzar, sigue el siguiente enlace:</p>
+      <div class="cta">
+        <a href="http://localhost:5173/verify-email/?token={{token}}">Unirme a Vid de Fe</a>
+      </div>
+      <p>¡Te esperamos con los brazos abiertos para servir juntos!</p>
+    </div>
+    <div class="footer">
+      <p>"Porque el Hijo del Hombre no vino para ser servido, sino para servir y para dar su vida en rescate por muchos." - Marcos 10:45</p>
+    </div>
+  </div>
+</body>
+
 </html>

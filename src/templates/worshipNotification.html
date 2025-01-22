@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notificación de Servicio</title>
+  <title>¡Culto Agendado!</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -89,24 +89,20 @@
   <div class="email-container">
     <div class="header">
       <img src="https://viddefe.com.s3.us-east-2.amazonaws.com/photos/solutionGrayLOGO-removebg.png" alt="Solutions Gray Logo">
-      <h1>¡Notificación de Servicio!</h1>
+      <h1>¡Culto Agendado!</h1>
     </div>
     <div class="content">
-      <p>Hola <span class="highlight">{{servant_name}}</span>,</p>
-      <p>Queremos recordarte que tienes asignado un servicio como <span class="highlight">{{rol_servant_name}}</span> en la iglesia <strong>{{churchName}}</strong>.</p>
-      <p>Detalles del servicio:</p>
-      <ul>
-        <li><strong>Fecha:</strong> {{date}}</li>
-        <li><strong>Hora:</strong> {{hour}}</li>
-      </ul>
-      <p>Por favor, asegúrate de estar listo y puntual para cumplir con tu servicio.</p>
+      <p>Te informamos que se ha agendado un nuevo culto en la iglesia <strong>{{churchName}}</strong>.</p>
+      <p><strong>Nombre del servicio:</strong> {{worshipServiceName}}</p>
+      <p><strong>Tipo de culto:</strong> {{typeWorshipName}}</p>
+      <p><strong>Fecha y Hora:</strong> {{date}}</p>
       <div class="cta">
-        <a href="http://localhost:5173/">Ver Detalles en Vid de Fe</a>
+        <a href="http://localhost:5173">Ver más detalles</a>
       </div>
-      <p>Gracias por tu dedicación y servicio al ministerio.</p>
+      <p>¡Nos encantaría contar con tu presencia!</p>
     </div>
     <div class="footer">
-      <p>"Sirvan de buena gana, como quien sirve al Señor y no a los hombres." - Efesios 6:7</p>
+      <p>"Porque donde están dos o tres congregados en mi nombre, allí estoy yo en medio de ellos." - Mateo 18:20</p>
     </div>
   </div>
 </body>
