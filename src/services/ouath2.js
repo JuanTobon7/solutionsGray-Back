@@ -195,7 +195,7 @@ exports.getInvitationBoarding = async (tokenId) => {
   }
   console.log('here here', tokenId, '\n\n\n\n\n\n')
   const query = `
-        SELECT i.* ,p.church_id,p.first_name, p.last_name, p.email, p.phone,p.church_id
+        SELECT i.* ,p.church_id,p.first_name, p.last_name, p.email, p.phone
         FROM invitations i
         JOIN people p ON p.id = i.person_id
         WHERE i.person_id = $1;
