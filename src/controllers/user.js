@@ -65,10 +65,11 @@ exports.updatePhoto = async (req, res) => {
 
       // Aquí puedes actualizar la información del usuario en tu base de datos
       const userId = req.user.id // Supongo que tienes el ID del usuario en req.user.id
-      const photoUrl = req.file.location // Multer-S3 guarda la URL pública en `location`
-
+      const url = String(req.file.location).split(process.env.BUCKET_URL) // Multer-S3 guarda la URL pública en `location`
+      console.log('url:', url)
       // Simulación de actualización en base de datos
       // Reemplaza esto con tu lógica para actualizar el usuario
+      const photoUrl = process.env.CLIENT_HOST + url[1]
       const updatedUser = await serviceUser.updatePhoto({ photoUrl, userId })
 
       if (!updatedUser) {
