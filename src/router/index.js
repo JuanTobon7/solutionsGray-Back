@@ -180,7 +180,7 @@ async function superAdmin (req, res, next) {
   await next()
 }
 async function adminApp (req, res, next) {
-  if (req.user.rolName !== 'AdminApp') {
+  if (req.user.rolName !== 'Admin App') {
     return res.status(401).send('No tienes los permisos')
   }
   await next()
