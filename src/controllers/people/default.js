@@ -19,7 +19,7 @@ exports.savePeople = async (req, res) => {
       return
     }
 
-    const churchId = req.user?.churchId ?? null
+    const churchId = Number(req.user.typePerson) === 1 ? null : req.user.churchId
 
     console.log('churchId', churchId)
     const result = await peopleServices.savePeople({ stateId, email, firstName, lastName, cc, phone, typePerson, churchId })

@@ -69,7 +69,7 @@ exports.updatePhoto = async (req, res) => {
       console.log('url:', url)
       // Simulación de actualización en base de datos
       // Reemplaza esto con tu lógica para actualizar el usuario
-      const photoUrl = process.env.CLIENT_HOST + url[1]
+      const photoUrl = process.env.CLIENT_HOST + '/' + url[1]
       const updatedUser = await serviceUser.updatePhoto({ photoUrl, userId })
 
       if (!updatedUser) {
